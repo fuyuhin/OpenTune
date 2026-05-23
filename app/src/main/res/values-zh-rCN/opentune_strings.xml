@@ -266,4 +266,12 @@
     <string name="error_no_song_playing">暂无正在播放的歌曲</string>
     <string name="error_no_similar_songs">暂无相似歌曲</string>
     <string name="error_automix_failed">获取相似歌曲失败</string>
+
+    <string name="widget_description">在桌面快速控制音乐播放</string>
+    <string name="widget_not_playing">未在播放</string>
+    <string name="widget_play">播放</string>
+    <string name="widget_pause">暂停</string>
+    <string name="widget_next">下一首</string>
+    <string name="widget_previous">上一首</string>
+    <string name="widget_album_art">专辑封面</string>
 </resources>

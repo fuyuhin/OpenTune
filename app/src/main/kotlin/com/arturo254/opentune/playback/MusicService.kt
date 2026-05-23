@@ -744,6 +744,11 @@ class MusicService :
             }
         }
 
+        currentMediaMetadata.distinctUntilChangedBy { it?.id }.collect(scope) { metadata ->
+            val playing = player.playWhenReady && player.playbackState != Player.STATE_ENDED
+            com.arturo254.opentune.widget.MusicWidgetUpdater.updateWidget(this, metadata, playing)
+        }
+
         combine(
             currentMediaMetadata.distinctUntilChangedBy { it?.id },
             dataStore.data.map { it[ShowLyricsKey] ?: false }.distinctUntilChanged(),

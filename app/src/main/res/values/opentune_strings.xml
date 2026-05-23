@@ -302,4 +302,12 @@
     <string name="cloud_uploading">Uploading to the cloud: %d%%</string>
     <string name="last_cloud_url">Last link</string>
     <string name="cloud_upload_error_detail">Error: %s</string>
+
+    <string name="widget_description">Music playback controls for quick access from your home screen</string>
+    <string name="widget_not_playing">Not playing</string>
+    <string name="widget_play">Play</string>
+    <string name="widget_pause">Pause</string>
+    <string name="widget_next">Next</string>
+    <string name="widget_previous">Previous</string>
+    <string name="widget_album_art">Album art</string>
 </resources>

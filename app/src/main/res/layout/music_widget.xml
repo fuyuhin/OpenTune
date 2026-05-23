@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/widget_background"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:padding="8dp">
+
+    <ImageView
+        android:id="@+id/widget_artwork"
+        android:layout_width="56dp"
+        android:layout_height="56dp"
+        android:contentDescription="@string/widget_album_art"
+        android:scaleType="centerCrop"
+        android:src="@mipmap/ic_launcher" />
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="10dp"
+        android:layout_marginEnd="8dp"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/widget_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:fontFamily="sans-serif-medium"
+            android:maxLines="1"
+            android:text="@string/widget_not_playing"
+            android:textColor="@color/widget_text_primary"
+            android:textSize="14sp" />
+
+        <TextView
+            android:id="@+id/widget_artist"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:ellipsize="end"
+            android:fontFamily="sans-serif"
+            android:maxLines="1"
+            android:textColor="@color/widget_text_secondary"
+            android:textSize="12sp" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:orientation="horizontal">
+
+        <ImageButton
+            android:id="@+id/widget_previous"
+            style="@style/WidgetControlButton"
+            android:contentDescription="@string/widget_previous"
+            android:src="@drawable/skip_previous" />
+
+        <ImageButton
+            android:id="@+id/widget_play_pause"
+            style="@style/WidgetControlButton"
+            android:contentDescription="@string/widget_play"
+            android:src="@drawable/play" />
+
+        <ImageButton
+            android:id="@+id/widget_next"
+            style="@style/WidgetControlButton"
+            android:contentDescription="@string/widget_next"
+            android:src="@drawable/skip_next" />
+    </LinearLayout>
+</LinearLayout>
