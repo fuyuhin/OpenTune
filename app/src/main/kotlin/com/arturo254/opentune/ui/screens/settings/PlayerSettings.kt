@@ -58,7 +58,6 @@ import com.arturo254.opentune.constants.PersistentQueueKey
 import com.arturo254.opentune.constants.SkipSilenceKey
 import com.arturo254.opentune.constants.StopMusicOnTaskClearKey
 import com.arturo254.opentune.constants.WakelockKey
-import com.arturo254.opentune.constants.WidgetShowLyricsKey
 import com.arturo254.opentune.constants.HistoryDuration
 import com.arturo254.opentune.constants.AudioCrossfadeDurationKey
 import com.arturo254.opentune.constants.PlayerStreamClient
@@ -169,11 +168,6 @@ fun PlayerSettings(
 
     val (wakelockEnabled, onWakelockChange) = rememberPreference(
         WakelockKey,
-        defaultValue = false
-    )
-
-    val (widgetShowLyrics, onWidgetShowLyricsChange) = rememberPreference(
-        WidgetShowLyricsKey,
         defaultValue = false
     )
 
@@ -428,18 +422,6 @@ fun PlayerSettings(
             icon = { Icon(painterResource(R.drawable.bolt), null) },
             checked = wakelockEnabled,
             onCheckedChange = onWakelockChange
-        )
-
-        PreferenceGroupTitle(
-            title = stringResource(R.string.widget)
-        )
-
-        SwitchPreference(
-            title = { Text(stringResource(R.string.widget_show_lyrics)) },
-            description = stringResource(R.string.widget_show_lyrics_desc),
-            icon = { Icon(painterResource(R.drawable.lyrics), null) },
-            checked = widgetShowLyrics,
-            onCheckedChange = onWidgetShowLyricsChange
         )
 
         PreferenceEntry(

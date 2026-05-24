@@ -156,6 +156,7 @@ import com.arturo254.opentune.lyrics.LyricsHelper
 import com.arturo254.opentune.lyrics.LyricsUtils
 import com.arturo254.opentune.models.PersistQueue
 import com.arturo254.opentune.models.PersistPlayerState
+import com.arturo254.opentune.models.MediaMetadata
 import com.arturo254.opentune.models.toMediaMetadata
 import com.arturo254.opentune.playback.queues.EmptyQueue
 import com.arturo254.opentune.playback.queues.Queue
@@ -772,6 +773,20 @@ class MusicService :
                 }
             }
         }
+
+        dataStore.data
+            .map { it[WidgetShowLyricsKey] ?: false }
+            .distinctUntilChanged()
+            .collectLatest(scope) {
+                // Reset cached lyrics state so the next poll picks up the new
+                // setting. Re-run notifyWidget(): if enabled and playing, a new
+                // job starts; otherwise the lyric line stays cleared.
+                widgetLyricsJob?.cancel()
+                widgetLyricsJob = null
+                widgetLyricsMediaId = null
+                currentWidgetLyricsLine = null
+                notifyWidget()
+            }
 
         dataStore.data
             .map { it[SkipSilenceKey] ?: false }
@@ -1451,6 +1466,29 @@ class MusicService :
     }
 
     fun notifyWidget() {
+        val metadata = currentMediaMetadata.value
+        val currentId = metadata?.id
+        val isPlaying = player.isPlaying || (player.playWhenReady && player.playbackState == Player.STATE_BUFFERING)
+
+        // Clear stale lyrics when the track changes
+        if (widgetLyricsMediaId != currentId) {
+            currentWidgetLyricsLine = null
+        }
+        if (isPlaying && metadata != null) {
+            startWidgetLyricsPolling(metadata)
+        } else {
+            stopWidgetLyricsPolling()
+        }
+        refreshWidgetView()
+    }
+
+    /**
+     * Pushes the latest snapshot to all widget instances without touching the
+     * polling state. The lyrics polling loop calls this directly so it doesn't
+     * re-enter notifyWidget() (which would try to manage the very job that is
+     * already running).
+     */
+    private fun refreshWidgetView() {
         val manager = AppWidgetManager.getInstance(this) ?: return
         val ids = manager.getAppWidgetIds(
             android.content.ComponentName(this, MusicWidgetProvider::class.java)
@@ -1467,18 +1505,6 @@ class MusicService :
         val artUrl = metadata?.thumbnailUrl
         val isLiked = currentSong.value?.song?.liked == true
         val repeatMode = player.repeatMode
-        val currentId = metadata?.id
-
-        // Clear stale lyrics when the track changes
-        if (widgetLyricsMediaId != currentId) {
-            currentWidgetLyricsLine = null
-        }
-        if (isPlaying && currentId != null) {
-            startWidgetLyricsPolling(currentId)
-        } else {
-            stopWidgetLyricsPolling()
-        }
-
         for (id in ids) {
             MusicWidgetProvider.updateWidgetContent(
                 this, manager, id,
@@ -1488,7 +1514,8 @@ class MusicService :
         }
     }
 
-    private fun startWidgetLyricsPolling(mediaId: String) {
+    private fun startWidgetLyricsPolling(metadata: MediaMetadata) {
+        val mediaId = metadata.id
         if (widgetLyricsMediaId == mediaId && widgetLyricsJob?.isActive == true) return
         widgetLyricsJob?.cancel()
         widgetLyricsMediaId = mediaId
@@ -1498,14 +1525,27 @@ class MusicService :
                 currentWidgetLyricsLine = null
                 return@launch
             }
-            val lyricsText = database.lyrics(mediaId).first()?.lyrics
+            // Lyrics may not be in DB yet if the user never opened the in-app
+            // lyrics screen — fetch them on demand so the widget can show them.
+            val cached = database.lyrics(mediaId).first()?.lyrics
+            val lyricsText: String? = cached ?: try {
+                val fetched = lyricsHelper.getLyrics(metadata)
+                database.query {
+                    upsert(LyricsEntity(id = mediaId, lyrics = fetched))
+                }
+                fetched
+            } catch (_: Exception) {
+                null
+            }
             if (lyricsText.isNullOrBlank() || lyricsText == LyricsEntity.LYRICS_NOT_FOUND) {
                 currentWidgetLyricsLine = null
+                withContext(Dispatchers.Main) { refreshWidgetView() }
                 return@launch
             }
             val entries = LyricsUtils.parseLyrics(lyricsText)
             if (entries.isEmpty()) {
                 currentWidgetLyricsLine = null
+                withContext(Dispatchers.Main) { refreshWidgetView() }
                 return@launch
             }
             while (isActive) {
@@ -1514,7 +1554,7 @@ class MusicService :
                 val newLine = entries.getOrNull(idx)?.text?.trim()?.takeIf { it.isNotBlank() }
                 if (newLine != currentWidgetLyricsLine) {
                     currentWidgetLyricsLine = newLine
-                    withContext(Dispatchers.Main) { notifyWidget() }
+                    withContext(Dispatchers.Main) { refreshWidgetView() }
                 }
                 delay(1000)
             }

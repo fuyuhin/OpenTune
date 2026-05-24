@@ -54,6 +54,27 @@ fun DiscordExperimental(
             ) {
                 item {
                     Text(
+                        text = stringResource(R.string.widget),
+                        style = MaterialTheme.typography.headlineSmall,
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
+                    )
+
+                    val (widgetShowLyrics, onWidgetShowLyricsChange) =
+                        rememberPreference(key = WidgetShowLyricsKey, defaultValue = false)
+
+                    SwitchPreference(
+                        title = { Text(stringResource(R.string.widget_show_lyrics)) },
+                        description = stringResource(R.string.widget_show_lyrics_desc),
+                        icon = { Icon(painterResource(R.drawable.lyrics), null) },
+                        checked = widgetShowLyrics,
+                        onCheckedChange = onWidgetShowLyricsChange,
+                    )
+
+                    Spacer(Modifier.height(16.dp))
+                }
+
+                item {
+                    Text(
                         text = stringResource(R.string.translator_options),
                         style = MaterialTheme.typography.headlineSmall,
                         modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)

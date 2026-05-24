@@ -6,15 +6,17 @@
     android:orientation="horizontal">
 
     <!--
-        Album art: fills full widget height for maximum visual impact.
-        Width is fixed at 120dp; scaleType=centerCrop handles any bitmap ratio.
-        Bitmap is rounded in code to match the widget's 16dp corner radius.
+        Album art: fixed square (120dp×120dp) for consistent visual identity.
+        Centered vertically with a small left margin so it doesn't touch the
+        widget's left edge. Bitmap is rounded in code to match outer corners.
         No android:src — empty state shows only the subtle rounded background.
     -->
     <ImageView
         android:id="@+id/widget_album_art"
         android:layout_width="120dp"
-        android:layout_height="match_parent"
+        android:layout_height="120dp"
+        android:layout_gravity="center_vertical"
+        android:layout_marginStart="8dp"
         android:scaleType="centerCrop"
         android:background="@drawable/widget_art_background" />
 
