@@ -3,13 +3,18 @@ package com.arturo254.opentune.widget
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
-import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.Paint
+import android.graphics.PorterDuff
+import android.graphics.PorterDuffXfermode
+import android.graphics.RectF
 import android.widget.RemoteViews
+import androidx.media3.common.Player
 import com.arturo254.opentune.MainActivity
 import com.arturo254.opentune.R
 import com.arturo254.opentune.playback.MusicService
@@ -37,18 +42,25 @@ class MusicWidgetProvider : AppWidgetProvider() {
         const val ACTION_UPDATE_WIDGET = "com.arturo254.opentune.widget.UPDATE"
         const val EXTRA_TITLE = "widget_title"
         const val EXTRA_ARTIST = "widget_artist"
+        const val EXTRA_ALBUM = "widget_album"
         const val EXTRA_IS_PLAYING = "widget_is_playing"
         const val EXTRA_ART_URL = "widget_art_url"
+        const val EXTRA_IS_LIKED = "widget_is_liked"
+        const val EXTRA_REPEAT_MODE = "widget_repeat_mode"
 
         // Actions handled by MusicService.onStartCommand
         const val ACTION_WIDGET_PLAY_PAUSE = "com.arturo254.opentune.widget.cmd.PLAY_PAUSE"
         const val ACTION_WIDGET_NEXT = "com.arturo254.opentune.widget.cmd.NEXT"
         const val ACTION_WIDGET_PREV = "com.arturo254.opentune.widget.cmd.PREV"
+        const val ACTION_WIDGET_LIKE = "com.arturo254.opentune.widget.cmd.LIKE"
+        const val ACTION_WIDGET_REPEAT = "com.arturo254.opentune.widget.cmd.REPEAT"
 
         fun updateWidget(context: Context, manager: AppWidgetManager, widgetId: Int) {
             val views = RemoteViews(context.packageName, R.layout.widget_music_player)
             views.setTextViewText(R.id.widget_song_title, context.getString(R.string.not_playing))
-            applyButtonTints(views)
+            views.setTextViewText(R.id.widget_artist_name, "")
+            views.setTextViewText(R.id.widget_album_name, "")
+            applyButtonTints(views, isLiked = false, repeatMode = Player.REPEAT_MODE_OFF)
             setClickListeners(context, views)
             manager.updateAppWidget(widgetId, views)
         }
@@ -59,8 +71,11 @@ class MusicWidgetProvider : AppWidgetProvider() {
             widgetId: Int,
             title: String?,
             artist: String?,
+            album: String?,
             isPlaying: Boolean,
             artUrl: String?,
+            isLiked: Boolean,
+            repeatMode: Int,
         ) {
             val views = RemoteViews(context.packageName, R.layout.widget_music_player)
             views.setTextViewText(
@@ -68,15 +83,16 @@ class MusicWidgetProvider : AppWidgetProvider() {
                 title?.ifBlank { null } ?: context.getString(R.string.not_playing),
             )
             views.setTextViewText(R.id.widget_artist_name, artist.orEmpty())
+            views.setTextViewText(R.id.widget_album_name, album.orEmpty())
             val playPauseIcon = if (isPlaying) R.drawable.ic_pause_white else R.drawable.ic_play_white
             views.setImageViewResource(R.id.widget_btn_play_pause, playPauseIcon)
-            applyButtonTints(views)
+            applyButtonTints(views, isLiked, repeatMode)
             setClickListeners(context, views)
             manager.updateAppWidget(widgetId, views)
 
             if (!artUrl.isNullOrBlank()) {
                 CoroutineScope(Dispatchers.IO).launch {
-                    val bitmap = loadBitmap(artUrl)
+                    val bitmap = loadAndRoundBitmap(artUrl)
                     withContext(Dispatchers.Main) {
                         if (bitmap != null) {
                             views.setImageViewBitmap(R.id.widget_album_art, bitmap)
@@ -92,12 +108,27 @@ class MusicWidgetProvider : AppWidgetProvider() {
             }
         }
 
-        private fun applyButtonTints(views: RemoteViews) {
-            // Set tints programmatically — android:tint is not reliable in RemoteViews
+        private fun applyButtonTints(views: RemoteViews, isLiked: Boolean, repeatMode: Int) {
+            // Tints set via setColorFilter — android:tint is unreliable in RemoteViews
             views.setInt(R.id.widget_btn_prev, "setColorFilter", Color.WHITE)
             views.setInt(R.id.widget_btn_next, "setColorFilter", Color.WHITE)
-            // Play button sits on white circle background, so icon must be dark
+            // Play button sits on a white circle background, so icon must be dark
             views.setInt(R.id.widget_btn_play_pause, "setColorFilter", Color.BLACK)
+
+            // Like button: filled (yellow) when liked, outlined (white) when not
+            val likeIcon = if (isLiked) R.drawable.favorite else R.drawable.favorite_border
+            views.setImageViewResource(R.id.widget_btn_like, likeIcon)
+            val likeTint = if (isLiked) Color.parseColor("#FFD700") else Color.WHITE
+            views.setInt(R.id.widget_btn_like, "setColorFilter", likeTint)
+
+            // Repeat button icon and tint based on current mode
+            val (repeatIcon, repeatTint) = when (repeatMode) {
+                Player.REPEAT_MODE_ONE -> Pair(R.drawable.repeat_one_on, Color.parseColor("#1DB954"))
+                Player.REPEAT_MODE_ALL -> Pair(R.drawable.repeat_on, Color.parseColor("#1DB954"))
+                else -> Pair(R.drawable.repeat, Color.WHITE)
+            }
+            views.setImageViewResource(R.id.widget_btn_repeat, repeatIcon)
+            views.setInt(R.id.widget_btn_repeat, "setColorFilter", repeatTint)
         }
 
         private fun setClickListeners(context: Context, views: RemoteViews) {
@@ -113,6 +144,14 @@ class MusicWidgetProvider : AppWidgetProvider() {
                 R.id.widget_btn_prev,
                 buildServiceIntent(context, ACTION_WIDGET_PREV),
             )
+            views.setOnClickPendingIntent(
+                R.id.widget_btn_like,
+                buildServiceIntent(context, ACTION_WIDGET_LIKE),
+            )
+            views.setOnClickPendingIntent(
+                R.id.widget_btn_repeat,
+                buildServiceIntent(context, ACTION_WIDGET_REPEAT),
+            )
             val openApp = PendingIntent.getActivity(
                 context,
                 0,
@@ -123,6 +162,7 @@ class MusicWidgetProvider : AppWidgetProvider() {
             )
             views.setOnClickPendingIntent(R.id.widget_song_title, openApp)
             views.setOnClickPendingIntent(R.id.widget_artist_name, openApp)
+            views.setOnClickPendingIntent(R.id.widget_album_name, openApp)
             views.setOnClickPendingIntent(R.id.widget_album_art, openApp)
         }
 
@@ -136,15 +176,39 @@ class MusicWidgetProvider : AppWidgetProvider() {
             )
         }
 
-        private fun loadBitmap(url: String): Bitmap? = try {
+        /**
+         * Downloads album art, center-crops to a square, and applies rounded corners
+         * so the image matches the widget's 12dp corner radius visually.
+         */
+        private fun loadAndRoundBitmap(url: String): Bitmap? = try {
             val connection = URL(url).openConnection() as HttpURLConnection
             connection.connectTimeout = 5000
             connection.readTimeout = 5000
             connection.connect()
             val stream: InputStream = connection.inputStream
-            BitmapFactory.decodeStream(stream).also { connection.disconnect() }
+            val original = BitmapFactory.decodeStream(stream).also { connection.disconnect() }
+            original?.let { makeSquareRounded(it) }
         } catch (_: Exception) {
             null
+        }
+
+        private fun makeSquareRounded(bitmap: Bitmap): Bitmap {
+            // Center-crop to square
+            val size = minOf(bitmap.width, bitmap.height)
+            val x = (bitmap.width - size) / 2
+            val y = (bitmap.height - size) / 2
+            val square = if (x == 0 && y == 0) bitmap
+                         else Bitmap.createBitmap(bitmap, x, y, size, size)
+
+            // Apply rounded corners (~12% of size ≈ 12dp at typical widget art resolution)
+            val radius = size * 0.12f
+            val output = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+            val canvas = Canvas(output)
+            val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+            canvas.drawRoundRect(RectF(0f, 0f, size.toFloat(), size.toFloat()), radius, radius, paint)
+            paint.xfermode = PorterDuffXfermode(PorterDuff.Mode.SRC_IN)
+            canvas.drawBitmap(square, 0f, 0f, paint)
+            return output
         }
     }
 }

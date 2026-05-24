@@ -1453,10 +1453,16 @@ class MusicService :
         val metadata = currentMediaMetadata.value
         val title = metadata?.title
         val artist = metadata?.artists?.joinToString(", ") { it.name }
+        val album = metadata?.album?.title
         val isPlaying = player.isPlaying || (player.playWhenReady && player.playbackState == Player.STATE_BUFFERING)
         val artUrl = metadata?.thumbnailUrl
+        val isLiked = currentSong.value?.song?.liked == true
+        val repeatMode = player.repeatMode
         for (id in ids) {
-            MusicWidgetProvider.updateWidgetContent(this, manager, id, title, artist, isPlaying, artUrl)
+            MusicWidgetProvider.updateWidgetContent(
+                this, manager, id,
+                title, artist, album, isPlaying, artUrl, isLiked, repeatMode,
+            )
         }
     }
 
@@ -4083,6 +4089,7 @@ class MusicService :
             Player.EVENT_IS_PLAYING_CHANGED,
             Player.EVENT_PLAY_WHEN_READY_CHANGED,
             Player.EVENT_PLAYBACK_STATE_CHANGED,
+            Player.EVENT_REPEAT_MODE_CHANGED,
         )
     ) {
         notifyWidget()
@@ -5021,6 +5028,21 @@ class MusicService :
             }
             MusicWidgetProvider.ACTION_WIDGET_PREV -> {
                 player.seekToPreviousMediaItem()
+            }
+            MusicWidgetProvider.ACTION_WIDGET_LIKE -> {
+                toggleLike()
+                // Notify widget after a short delay to pick up the DB write
+                android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(
+                    { notifyWidget() }, 300L
+                )
+            }
+            MusicWidgetProvider.ACTION_WIDGET_REPEAT -> {
+                // Cycle: OFF → ONE → ALL → OFF
+                player.repeatMode = when (player.repeatMode) {
+                    REPEAT_MODE_OFF -> REPEAT_MODE_ONE
+                    REPEAT_MODE_ONE -> REPEAT_MODE_ALL
+                    else -> REPEAT_MODE_OFF
+                }
             }
         }
         return START_NOT_STICKY
