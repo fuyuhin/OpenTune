@@ -8,9 +8,11 @@ on:
       - main
       - 'claude/**'
 
+permissions:
+  contents: write
+
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     steps:
@@ -27,8 +29,7 @@ jobs:
       uses: android-actions/setup-android@v3
 
     - name: Install SDK components
-      run: |
-        sdkmanager --install "platforms;android-36" "build-tools;36.0.0"
+      run: sdkmanager --install "platforms;android-36" "build-tools;36.0.0"
 
     - name: Grant execute permission
       run: chmod +x gradlew
@@ -36,8 +37,28 @@ jobs:
     - name: Build ARM64 APK
       run: ./gradlew assembleArm64Debug
 
-    - name: Upload APK
+    - name: Get version name
+      id: version
+      run: |
+        VERSION=$(grep 'versionName' app/build.gradle.kts | head -1 | sed 's/.*"\(.*\)".*/\1/')
+        SHORT_SHA=${GITHUB_SHA::7}
+        echo "name=v${VERSION}-${SHORT_SHA}" >> $GITHUB_OUTPUT
+
+    - name: Upload APK to Artifacts
       uses: actions/upload-artifact@v4
       with:
         name: OpenTune-arm64
         path: app/build/outputs/apk/arm64/debug/*.apk
+
+    - name: Publish Release
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: ${{ steps.version.outputs.name }}
+        name: OpenTune ${{ steps.version.outputs.name }}
+        body: |
+          自动构建版本（ARM64 Debug）
+
+          包含桌面小组件功能：显示当前播放歌曲，支持播放/暂停/上下曲控制。
+        files: app/build/outputs/apk/arm64/debug/*.apk
+        draft: false
+        prerelease: true
