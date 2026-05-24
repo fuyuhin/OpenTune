@@ -61,4 +61,4 @@ jobs:
           包含桌面小组件功能：显示当前播放歌曲，支持播放/暂停/上下曲控制。
         files: app/build/outputs/apk/arm64/debug/*.apk
         draft: false
-        prerelease: true
+        prerelease: false

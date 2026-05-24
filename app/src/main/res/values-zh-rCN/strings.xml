@@ -720,4 +720,47 @@
     <string name="token_copied">令牌已复制到剪贴板</string>
     <string name="no_visitor_data">未获取到访客数据，无法生成令牌</string>
     <string name="extracting_from_url">正在从 URL 提取令牌…</string>
+
+    <!-- AOD 常亮显示 -->
+    <string name="aod_screen_title">常亮显示</string>
+    <string name="aod_style_title">AOD 样式</string>
+    <string name="aod_style_classic">经典</string>
+    <string name="aod_style_classic_desc">居中封面</string>
+    <string name="aod_style_background">氛围</string>
+    <string name="aod_style_background_desc">模糊背景艺术</string>
+    <string name="aod_style_minimal">极简</string>
+    <string name="aod_style_minimal_desc">仅显示基本信息</string>
+    <string name="aod_style_large">沉浸式</string>
+    <string name="aod_style_large_desc">全屏艺术封面</string>
+    <string name="aod_style_spotlight">聚光灯</string>
+    <string name="aod_style_spotlight_desc">光晕效果</string>
+    <string name="aod_shape_title">封面形状</string>
+    <string name="aod_shape_rounded">圆角</string>
+    <string name="aod_shape_circle">圆形</string>
+    <string name="aod_shape_squircle">方圆形</string>
+    <string name="aod_shape_diamond">菱形</string>
+    <string name="aod_shape_hexagon">六边形</string>
+    <string name="aod_shape_star">星形</string>
+    <string name="aod_shape_arch">拱形</string>
+    <string name="aod_shape_petal">花瓣形</string>
+    <string name="aod_darkness_title">背景暗度</string>
+    <string name="aod_darkness_label">暗度等级</string>
+    <string name="aod_darkness_description">氛围和聚光灯样式的遮罩不透明度</string>
+    <string name="aod_art_size_title">封面大小</string>
+    <string name="aod_art_size_label">相对大小</string>
+    <string name="aod_art_size_description">封面占屏幕宽度的比例</string>
+    <string name="aod_visible_elements_title">显示元素</string>
+    <string name="aod_show_title">显示标题</string>
+    <string name="aod_show_artist">显示艺术家</string>
+    <string name="aod_show_time">显示时间</string>
+    <string name="aod_show_time_description">播放位置和时长标签</string>
+    <string name="aod_show_progress">显示进度条</string>
+    <string name="aod_show_controls">显示控制按钮</string>
+    <string name="aod_show_controls_description">上一首、播放/暂停、下一首</string>
+
+    <!-- 桌面小组件 -->
+    <string name="not_playing">未在播放</string>
+    <string name="play_pause">播放/暂停</string>
+    <string name="previous">上一首</string>
+    <string name="album_art">专辑封面</string>
 </resources>

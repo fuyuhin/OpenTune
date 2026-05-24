@@ -266,4 +266,35 @@
     <string name="error_no_song_playing">暂无正在播放的歌曲</string>
     <string name="error_no_similar_songs">暂无相似歌曲</string>
     <string name="error_automix_failed">获取相似歌曲失败</string>
+
+    <!-- 云备份 -->
+    <string name="cloud_backup">云备份</string>
+    <string name="cloud_backup_desc">自动将备份上传至 Filebin</string>
+    <string name="cloud_upload_success">文件已上传：%s</string>
+    <string name="cloud_upload_failed">上传失败：%s</string>
+    <string name="cloud_upload_error">上传错误</string>
+    <string name="cloud_uploading">正在上传至云端：%d%%</string>
+    <string name="cloud_upload_error_detail">错误：%s</string>
+    <string name="last_cloud_url">最近链接</string>
+
+    <!-- 音乐识别 -->
+    <string name="music_recognition_tap_to_listen">点击识别</string>
+    <string name="music_recognition_listening">正在聆听…</string>
+    <string name="music_recognition_processing">正在处理…</string>
+    <string name="music_recognition_listen_again">重新识别</string>
+    <string name="music_recognition_no_match">未找到匹配</string>
+    <string name="music_recognition_signature_failed">无法生成声纹</string>
+    <string name="music_recognition_recognition_failed">识别失败</string>
+    <string name="music_recognition_open_shazam">打开 Shazam</string>
+    <string name="music_recognition_lyrics_preview">歌词预览</string>
+    <string name="music_recognition_permission_title">麦克风权限</string>
+    <string name="music_recognition_permission_desc">允许麦克风访问以识别附近的音乐。</string>
+    <string name="music_recognition_permission_action">允许</string>
+    <string name="music_recognition_error">出现错误</string>
+
+    <!-- 桌面小组件 -->
+    <string name="not_playing">未在播放</string>
+    <string name="play_pause">播放/暂停</string>
+    <string name="previous">上一首</string>
+    <string name="album_art">专辑封面</string>
 </resources>
