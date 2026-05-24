@@ -6,21 +6,20 @@
     android:orientation="horizontal">
 
     <!--
-        Album art: fixed square (120dp×120dp) for consistent visual identity.
-        Centered vertically with a small left margin so it doesn't touch the
-        widget's left edge. Bitmap is rounded in code to match outer corners.
-        No android:src — empty state shows only the subtle rounded background.
+        Album art: fixed 130dp×130dp square, anchored to the widget's
+        top-left corner with no margin so it touches the widget's top,
+        bottom, and left edges. The bitmap is rounded in code; its left
+        corners line up with the widget background's 16dp outer corners.
+        No android:src — empty state shows only the rounded background.
     -->
     <ImageView
         android:id="@+id/widget_album_art"
-        android:layout_width="120dp"
-        android:layout_height="120dp"
-        android:layout_gravity="center_vertical"
-        android:layout_marginStart="8dp"
+        android:layout_width="130dp"
+        android:layout_height="130dp"
         android:scaleType="centerCrop"
         android:background="@drawable/widget_art_background" />
 
-    <!-- Right column: text fills remaining space; controls pinned at bottom -->
+    <!-- Right column: text hugs the top; controls pinned at the bottom -->
     <LinearLayout
         android:layout_width="0dp"
         android:layout_height="match_parent"
@@ -31,13 +30,11 @@
         android:paddingTop="8dp"
         android:paddingBottom="6dp">
 
-        <!-- Text section: grows to fill space above controls -->
+        <!-- Text section sized to its content, sitting at the top -->
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:orientation="vertical"
-            android:gravity="center_vertical">
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
 
             <TextView
                 android:id="@+id/widget_song_title"
@@ -45,54 +42,59 @@
                 android:layout_height="wrap_content"
                 android:text="@string/not_playing"
                 android:textColor="#FFFFFFFF"
-                android:textSize="14sp"
+                android:textSize="15sp"
                 android:textStyle="bold"
                 android:maxLines="2"
-                android:ellipsize="end" />
+                android:ellipsize="end"
+                android:lineSpacingExtra="-1dp" />
 
             <TextView
                 android:id="@+id/widget_artist_name"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:textColor="#CCFFFFFF"
-                android:textSize="11sp"
-                android:maxLines="2"
+                android:textSize="12sp"
+                android:maxLines="1"
                 android:ellipsize="end"
-                android:layout_marginTop="1dp" />
+                android:layout_marginTop="2dp" />
 
             <TextView
                 android:id="@+id/widget_album_name"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:textColor="#99FFFFFF"
-                android:textSize="11sp"
+                android:textSize="12sp"
                 android:maxLines="1"
-                android:ellipsize="end"
-                android:layout_marginTop="1dp" />
+                android:ellipsize="end" />
 
-            <!-- Current lyrics line (NetEase-style); shown only when lyrics are enabled -->
+            <!-- Current lyrics line (NetEase-style); shown only when enabled -->
             <TextView
                 android:id="@+id/widget_lyrics"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:textColor="#AAFFFFFF"
-                android:textSize="10sp"
+                android:textSize="11sp"
                 android:textStyle="italic"
                 android:maxLines="1"
                 android:ellipsize="end"
-                android:layout_marginTop="3dp"
+                android:layout_marginTop="2dp"
                 android:visibility="gone" />
 
         </LinearLayout>
 
+        <!-- Spring: pushes the controls row to the bottom -->
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
         <!--
-            Controls: fixed height, 5 equal slots.
-            Like / repeat use icon variants to convey state.
-            Play sits on a white circle; icon must stay dark (BLACK filter).
+            Controls: 5 equal slots. Like/repeat use icon variants to convey
+            state. Play sits on a white circle so its icon stays dark.
         -->
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="38dp"
+            android:layout_height="42dp"
             android:orientation="horizontal">
 
             <FrameLayout
@@ -101,8 +103,8 @@
                 android:layout_weight="1">
                 <ImageButton
                     android:id="@+id/widget_btn_like"
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
+                    android:layout_width="26dp"
+                    android:layout_height="26dp"
                     android:layout_gravity="center"
                     android:src="@drawable/favorite_border"
                     android:background="@android:color/transparent"
@@ -115,8 +117,8 @@
                 android:layout_weight="1">
                 <ImageButton
                     android:id="@+id/widget_btn_prev"
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
+                    android:layout_width="26dp"
+                    android:layout_height="26dp"
                     android:layout_gravity="center"
                     android:src="@drawable/ic_widget_prev"
                     android:background="@android:color/transparent"
@@ -129,8 +131,8 @@
                 android:layout_weight="1">
                 <ImageButton
                     android:id="@+id/widget_btn_play_pause"
-                    android:layout_width="36dp"
-                    android:layout_height="36dp"
+                    android:layout_width="42dp"
+                    android:layout_height="42dp"
                     android:layout_gravity="center"
                     android:src="@drawable/ic_play_white"
                     android:background="@drawable/widget_play_button_bg"
@@ -143,8 +145,8 @@
                 android:layout_weight="1">
                 <ImageButton
                     android:id="@+id/widget_btn_next"
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
+                    android:layout_width="26dp"
+                    android:layout_height="26dp"
                     android:layout_gravity="center"
                     android:src="@drawable/ic_widget_next"
                     android:background="@android:color/transparent"
@@ -157,8 +159,8 @@
                 android:layout_weight="1">
                 <ImageButton
                     android:id="@+id/widget_btn_repeat"
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
+                    android:layout_width="26dp"
+                    android:layout_height="26dp"
                     android:layout_gravity="center"
                     android:src="@drawable/repeat"
                     android:background="@android:color/transparent"

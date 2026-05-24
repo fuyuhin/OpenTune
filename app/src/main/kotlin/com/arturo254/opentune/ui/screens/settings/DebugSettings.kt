@@ -95,6 +95,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import com.arturo254.opentune.LocalPlayerConnection
 import com.arturo254.opentune.R
+import com.arturo254.opentune.constants.WidgetShowLyricsKey
 import com.arturo254.opentune.ui.component.IconButton
 import com.arturo254.opentune.ui.component.PreferenceGroupTitle
 import com.arturo254.opentune.ui.component.SwitchPreference
@@ -122,6 +123,11 @@ fun DebugSettings(
 
     val (showCodecOnPlayer, onShowCodecOnPlayerChange) = rememberPreference(
         key = booleanPreferencesKey("show_codec_on_player"),
+        defaultValue = false
+    )
+
+    val (widgetShowLyrics, onWidgetShowLyricsChange) = rememberPreference(
+        key = WidgetShowLyricsKey,
         defaultValue = false
     )
 
@@ -182,6 +188,14 @@ fun DebugSettings(
                 icon = { Icon(painterResource(R.drawable.graphic_eq), null) },
                 checked = showCodecOnPlayer,
                 onCheckedChange = onShowCodecOnPlayerChange
+            )
+
+            SwitchPreference(
+                title = { Text(stringResource(R.string.widget_show_lyrics)) },
+                description = stringResource(R.string.widget_show_lyrics_desc),
+                icon = { Icon(painterResource(R.drawable.lyrics), null) },
+                checked = widgetShowLyrics,
+                onCheckedChange = onWidgetShowLyricsChange
             )
 
             AnimatedVisibility(
