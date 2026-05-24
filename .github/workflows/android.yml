@@ -34,8 +34,12 @@ jobs:
     - name: Grant execute permission
       run: chmod +x gradlew
 
-    - name: Build ARM64 APK
-      run: ./gradlew assembleArm64Debug
+    - name: Build ARM64 Release APK
+      env:
+        STORE_PASSWORD: opentune_release
+        KEY_ALIAS: opentune
+        KEY_PASSWORD: opentune_release
+      run: ./gradlew assembleArm64Release
 
     - name: Get version name
       id: version
@@ -48,7 +52,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: OpenTune-arm64
-        path: app/build/outputs/apk/arm64/debug/*.apk
+        path: app/build/outputs/apk/arm64/release/*.apk
 
     - name: Publish Release
       uses: softprops/action-gh-release@v2
@@ -56,9 +60,9 @@ jobs:
         tag_name: ${{ steps.version.outputs.name }}
         name: OpenTune ${{ steps.version.outputs.name }}
         body: |
-          自动构建版本（ARM64 Debug）
+          自动构建版本（ARM64 Release）
 
           包含桌面小组件功能：显示当前播放歌曲，支持播放/暂停/上下曲控制。
-        files: app/build/outputs/apk/arm64/debug/*.apk
+        files: app/build/outputs/apk/arm64/release/*.apk
         draft: false
         prerelease: false

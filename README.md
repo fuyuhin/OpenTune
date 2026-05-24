@@ -1,399 +1,321 @@
 # OpenTune
 
 <div align="center">
-  <img src="https://github.com/Arturo254/OpenTune/blob/master/fastlane/metadata/android/en-US/images/featureGraphic.png" alt="Banner de OpenTune" width="100%"/>
+  <img src="https://github.com/fuyuhin/OpenTune/blob/master/fastlane/metadata/android/en-US/images/featureGraphic.png" alt="OpenTune Banner" width="100%"/>
   
-  ### Cliente Avanzado de YouTube Music con Material Design 3 para Android
+  ### 基于 Material Design 3 的 Android YouTube Music 高级客户端
   
-  [![Última Versión](https://img.shields.io/github/v/release/Arturo254/OpenTune?style=flat-square&logo=github&color=0D1117&labelColor=161B22)](https://github.com/Arturo254/OpenTune/releases)
-  [![Licencia](https://img.shields.io/github/license/Arturo254/OpenTune?style=flat-square&logo=gnu&color=2B3137&labelColor=161B22)](https://github.com/Arturo254/OpenTune/blob/main/LICENSE)
-  [![Estado de Traducción](https://badges.crowdin.net/opentune/localized.svg)](https://crowdin.com/project/opentune)
-  [![Android](https://img.shields.io/badge/Plataforma-Android%206.0+-3DDC84.svg?style=flat-square&logo=android&logoColor=white&labelColor=161B22)](https://www.android.com)
-  [![Estrellas](https://img.shields.io/github/stars/Arturo254/OpenTune?style=flat-square&logo=github&color=yellow&labelColor=161B22)](https://github.com/Arturo254/OpenTune/stargazers)
-  [![Forks](https://img.shields.io/github/forks/Arturo254/OpenTune?style=flat-square&logo=github&color=blue&labelColor=161B22)](https://github.com/Arturo254/OpenTune/network/members)
+  [![最新版本](https://img.shields.io/github/v/release/fuyuhin/OpenTune?style=flat-square&logo=github&color=0D1117&labelColor=161B22)](https://github.com/fuyuhin/OpenTune/releases)
+  [![许可证](https://img.shields.io/github/license/fuyuhin/OpenTune?style=flat-square&logo=gnu&color=2B3137&labelColor=161B22)](https://github.com/fuyuhin/OpenTune/blob/main/LICENSE)
+  [![Android](https://img.shields.io/badge/平台-Android%206.0+-3DDC84.svg?style=flat-square&logo=android&logoColor=white&labelColor=161B22)](https://www.android.com)
+  [![Stars](https://img.shields.io/github/stars/fuyuhin/OpenTune?style=flat-square&logo=github&color=yellow&labelColor=161B22)](https://github.com/fuyuhin/OpenTune/stargazers)
+  [![Forks](https://img.shields.io/github/forks/fuyuhin/OpenTune?style=flat-square&logo=github&color=blue&labelColor=161B22)](https://github.com/fuyuhin/OpenTune/network/members)
 </div>
 
+---
 
+## 目录
 
-
-[![English](https://img.shields.io/badge/readme.md-english-blue?style=for-the-badge)](README.en.md)
-
-
+- [项目简介](#项目简介)
+- [技术栈](#技术栈)
+- [主要功能](#主要功能)
+- [文档](#文档)
+- [安装方式](#安装方式)
+- [从源码编译](#从源码编译)
+- [贡献指南](#贡献指南)
+- [致谢](#致谢)
+- [许可证](#许可证)
 
 ---
 
-## Tabla de Contenido
+## 项目简介
 
-- [Visión General](#visión-general)
-- [Stack Tecnológico](#stack-tecnológico)
-- [Características Principales](#características-principales)
-- [Documentación](#documentación)
-- [Instalación](#instalación)
-- [Compilación desde Código Fuente](#compilación-desde-código-fuente)
-- [Contribuciones](#contribuciones)
-- [Apoya el Proyecto](#apoya-el-proyecto)
-- [Reconocimientos](#reconocimientos)
-- [Licencia](#licencia)
+**OpenTune** 是一款开源的 Android YouTube Music 客户端。它采用 Material Design 3 现代界面，提供超越官方应用的高级功能，让你自由探索、播放和管理音乐内容，无广告干扰。
 
----
+### 核心优势
 
-## Visión General
+- **无广告体验**：畅享音乐，零广告打扰
+- **性能优化**：播放流畅，界面响应迅速
+- **隐私保护**：不收集用户数据，不跟踪行为
+- **界面可定制**：按照个人喜好调整音乐体验
+- **离线播放**：下载音乐，随时随地畅听
 
-**OpenTune** es un cliente de YouTube Music de código abierto diseñado para dispositivos Android. Ofrece una experiencia de usuario superior con una interfaz moderna que implementa Material Design 3, proporcionando funcionalidades avanzadas para explorar, reproducir y gestionar contenido musical sin las limitaciones de la aplicación oficial.
-
-### Beneficios Clave
-
-- **Experiencia sin Anuncios**: Disfruta de música sin interrupciones publicitarias
-- **Rendimiento Mejorado**: Optimizado para reproducción y navegación fluida
-- **Enfoque en la Privacidad**: Sin recolección de datos ni seguimiento
-- **Interfaz Personalizable**: Personaliza tu experiencia musical
-- **Capacidades Offline**: Descarga y reproduce música sin conexión a internet
-
-> **Nota**: OpenTune es un proyecto independiente y no está afiliado, patrocinado ni respaldado por YouTube o Google.
+> **说明**：OpenTune 是独立开源项目，与 YouTube 和 Google 无任何关联。
 
 ---
 
-## Stack Tecnológico
+## 技术栈
 
 <div align="center">
   
-| Frontend | Backend | Herramientas de Desarrollo |
-|:--------:|:-------:|:-------------------------:|
-| ![Kotlin](https://img.shields.io/badge/Kotlin-7F52FF?style=for-the-badge&logo=kotlin&logoColor=white) | ![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white) | ![Android Studio](https://img.shields.io/badge/Android%20Studio-3DDC84?style=for-the-badge&logo=androidstudio&logoColor=white) |
-| ![Jetpack Compose](https://img.shields.io/badge/Jetpack%20Compose-4285F4?style=for-the-badge&logo=jetpackcompose&logoColor=white) | ![TensorFlow](https://img.shields.io/badge/TensorFlow-FF6F00?style=for-the-badge&logo=tensorflow&logoColor=white) | ![Gradle](https://img.shields.io/badge/Gradle-02303A?style=for-the-badge&logo=gradle&logoColor=white) |
-| ![Material Design 3](https://img.shields.io/badge/Material%20Design%203-757575?style=for-the-badge&logo=materialdesign&logoColor=white) | | ![Git](https://img.shields.io/badge/Git-F05032?style=for-the-badge&logo=git&logoColor=white) |
+| 前端 | 工具 |
+|:----:|:----:|
+| ![Kotlin](https://img.shields.io/badge/Kotlin-7F52FF?style=for-the-badge&logo=kotlin&logoColor=white) | ![Android Studio](https://img.shields.io/badge/Android%20Studio-3DDC84?style=for-the-badge&logo=androidstudio&logoColor=white) |
+| ![Jetpack Compose](https://img.shields.io/badge/Jetpack%20Compose-4285F4?style=for-the-badge&logo=jetpackcompose&logoColor=white) | ![Gradle](https://img.shields.io/badge/Gradle-02303A?style=for-the-badge&logo=gradle&logoColor=white) |
+| ![Material Design 3](https://img.shields.io/badge/Material%20Design%203-757575?style=for-the-badge&logo=materialdesign&logoColor=white) | ![Git](https://img.shields.io/badge/Git-F05032?style=for-the-badge&logo=git&logoColor=white) |
 
 </div>
 
 ---
 
-## Características Principales
+## 主要功能
 
-### Funcionalidad Principal
+### 核心功能
 <table>
 <tr>
-<th width="30%">Característica</th>
-<th width="70%">Descripción</th>
+<th width="30%">功能</th>
+<th width="70%">说明</th>
 </tr>
 <tr>
-<td><strong>🎵 Reproducción sin Anuncios</strong></td>
-<td>Disfruta de música sin interrupciones publicitarias</td>
+<td><strong>🎵 无广告播放</strong></td>
+<td>畅享音乐，零广告打扰</td>
 </tr>
 <tr>
-<td><strong>🔄 Reproducción en Segundo Plano</strong></td>
-<td>Continúa escuchando mientras usas otras aplicaciones</td>
+<td><strong>🔄 后台播放</strong></td>
+<td>使用其他应用的同时继续播放音乐</td>
 </tr>
 <tr>
-<td><strong>🔍 Búsqueda Avanzada</strong></td>
-<td>Encuentra rápidamente canciones, vídeos, álbumes y listas de reproducción</td>
+<td><strong>🔍 高级搜索</strong></td>
+<td>快速查找歌曲、视频、专辑和播放列表</td>
 </tr>
 <tr>
-<td><strong>👤 Integración de Cuenta</strong></td>
-<td>Inicia sesión para sincronizar preferencias y colecciones</td>
+<td><strong>👤 账户同步</strong></td>
+<td>登录账户以同步偏好设置和收藏内容</td>
 </tr>
 <tr>
-<td><strong>📚 Gestión de Biblioteca</strong></td>
-<td>Organiza y administra completamente tu colección musical</td>
+<td><strong>📚 音乐库管理</strong></td>
+<td>完整组织和管理你的音乐收藏</td>
 </tr>
 <tr>
-<td><strong>📱 Modo Offline</strong></td>
-<td>Descarga contenido para escuchar sin conexión</td>
+<td><strong>📱 离线模式</strong></td>
+<td>下载内容，无需网络也能收听</td>
+</tr>
+<tr>
+<td><strong>🖼️ 桌面小组件</strong></td>
+<td>主屏幕显示当前播放歌曲，支持播放/暂停/上下曲控制</td>
 </tr>
 </table>
 
-### Mejoras de Audio
+### 音频增强
 <table>
 <tr>
-<th width="30%">Característica</th>
-<th width="70%">Descripción</th>
+<th width="30%">功能</th>
+<th width="70%">说明</th>
 </tr>
 <tr>
-<td><strong>🎤 Letras Sincronizadas</strong></td>
-<td>Visualiza letras de canciones perfectamente sincronizadas</td>
+<td><strong>🎤 同步歌词</strong></td>
+<td>实时显示与音乐完美同步的歌词</td>
 </tr>
 <tr>
-<td><strong>⚡ Omisión Inteligente de Silencios</strong></td>
-<td>Omite automáticamente segmentos sin audio</td>
+<td><strong>⚡ 智能跳过静音</strong></td>
+<td>自动跳过无声片段</td>
 </tr>
 <tr>
-<td><strong>🔊 Normalización de Volumen</strong></td>
-<td>Equilibra los niveles de sonido entre diferentes pistas</td>
+<td><strong>🔊 音量均衡</strong></td>
+<td>均衡不同曲目间的音量差异</td>
 </tr>
 <tr>
-<td><strong>🎛️ Control de Tempo y Tono</strong></td>
-<td>Ajusta la velocidad y el tono de reproducción según preferencias</td>
+<td><strong>🎛️ 速度与音调调节</strong></td>
+<td>自由调整播放速度和音调</td>
 </tr>
 </table>
 
-### Personalización e Integración
+### 个性化与集成
 <table>
 <tr>
-<th width="30%">Característica</th>
-<th width="70%">Descripción</th>
+<th width="30%">功能</th>
+<th width="70%">说明</th>
 </tr>
 <tr>
-<td><strong>🎨 Temas Dinámicos</strong></td>
-<td>La interfaz se adapta a los colores de las portadas de álbumes</td>
+<td><strong>🎨 动态主题</strong></td>
+<td>界面色彩自动跟随专辑封面变化</td>
 </tr>
 <tr>
-<td><strong>🌐 Soporte Multiidioma</strong></td>
-<td>Disponible en numerosos idiomas para usuarios globales</td>
+<td><strong>🌐 多语言支持</strong></td>
+<td>支持多种语言，服务全球用户</td>
 </tr>
 <tr>
-<td><strong>🚗 Compatible con Android Auto</strong></td>
-<td>Integración con sistemas de infoentretenimiento vehicular</td>
+<td><strong>🚗 Android Auto 支持</strong></td>
+<td>与车载娱乐系统无缝集成</td>
 </tr>
 <tr>
 <td><strong>🎯 Material Design 3</strong></td>
-<td>Diseño alineado con las últimas directrices de diseño de Google</td>
+<td>遵循 Google 最新设计规范</td>
 </tr>
 <tr>
-<td><strong>🖼️ Exportación de Portadas</strong></td>
-<td>Guarda imágenes de álbumes en alta resolución</td>
+<td><strong>🖼️ 导出专辑封面</strong></td>
+<td>保存高分辨率专辑封面图片</td>
 </tr>
 </table>
 
 ---
 
-## Documentación
+## 文档
 
-Para información detallada sobre configuración, características avanzadas y guías de uso, consulta nuestra documentación oficial:
+详细的配置说明、高级功能介绍和使用指南，请查阅官方文档：
 
 <div align="center">
   
-[![Documentación](https://img.shields.io/badge/Documentación-GitBook-4285F4?style=for-the-badge&logo=gitbook&logoColor=white)](https://opentune.gitbook.io/)
+[![文档](https://img.shields.io/badge/文档-GitBook-4285F4?style=for-the-badge&logo=gitbook&logoColor=white)](https://opentune.gitbook.io/)
 
 </div>
 
 ---
 
-## Instalación
+## 安装方式
 
-### Requisitos del Sistema
+### 系统要求
 
-| Componente | Requisito Mínimo |
-|:-----------|:-----------------|
-| Sistema Operativo | Android 6.0 (Marshmallow) o superior |
-| Espacio de Almacenamiento | 10 MB disponibles |
-| Red | Conexión a Internet para streaming |
-| RAM | 2 GB recomendados |
+| 组件 | 最低要求 |
+|:-----|:---------|
+| 操作系统 | Android 6.0（棉花糖）或更高版本 |
+| 存储空间 | 至少 10 MB 可用空间 |
+| 网络 | 在线播放需要网络连接 |
+| 内存 | 建议 2 GB 以上 RAM |
 
-### Métodos de Instalación
+### 安装方法
 
-#### Opción 1: Releases de GitHub (Recomendado)
+#### 方式一：GitHub Releases（推荐）
 
-1. Navega a la sección de [Releases](https://github.com/Arturo254/OpenTune/releases) en GitHub
-2. Descarga el archivo APK de la última versión estable
-3. Habilita "Instalar desde fuentes desconocidas" en la configuración de seguridad de tu dispositivo
-4. Abre el archivo APK descargado para completar la instalación
-
-#### Opción 2: Sitio Web Oficial
-
-1. Visita el [sitio web oficial de OpenTune](https://opentune.netlify.app/)
-2. Selecciona la opción de descarga para Android
-3. Sigue las instrucciones de instalación proporcionadas
-
-#### Opción 3: F-Droid
-
-<div align="center">
-  
-[![F-Droid](https://img.shields.io/badge/F--Droid-1976D2?style=for-the-badge&logo=f-droid&logoColor=white)](https://f-droid.org/es/packages/com.Arturo254.opentune/)
-
-</div>
-
-#### Opción 4: OpenApk
-
-<div align="center">
-  
-[![OpenApk](https://img.shields.io/badge/OpenApk-FF6B35?style=for-the-badge&logo=android&logoColor=white)](https://www.openapk.net/opentune/com.Arturo254.opentune/)
-
-</div>
-
-> **Aviso de Seguridad**: Por razones de seguridad, se recomienda obtener la aplicación exclusivamente a través de los canales oficiales mencionados anteriormente. Evita descargar APKs de fuentes no verificadas.
+1. 前往本项目的 [Releases 页面](https://github.com/fuyuhin/OpenTune/releases)
+2. 下载最新版本的 APK 文件
+3. 在设备安全设置中开启"允许安装未知来源应用"
+4. 打开下载的 APK 文件完成安装
 
 ---
 
-## Compilación desde Código Fuente
+## 从源码编译
 
-### Requisitos Previos
+### 前置条件
 
 <table>
 <tr>
-<th>Herramienta</th>
-<th>Versión Recomendada</th>
-<th>Propósito</th>
+<th>工具</th>
+<th>推荐版本</th>
+<th>用途</th>
 </tr>
 <tr>
 <td>Gradle</td>
-<td>7.5 o superior</td>
-<td>Automatización de construcción</td>
+<td>8.0 或更高</td>
+<td>构建自动化</td>
 </tr>
 <tr>
 <td>Kotlin</td>
-<td>1.7 o superior</td>
-<td>Lenguaje de programación</td>
+<td>2.0 或更高</td>
+<td>编程语言</td>
 </tr>
 <tr>
 <td>Android Studio</td>
-<td>2022.1 o superior</td>
-<td>IDE y entorno de desarrollo</td>
+<td>2024.1 或更高</td>
+<td>IDE 及开发环境</td>
 </tr>
 <tr>
 <td>JDK</td>
-<td>11 o superior</td>
-<td>Entorno de ejecución Java</td>
+<td>21 或更高</td>
+<td>Java 运行环境</td>
 </tr>
 <tr>
 <td>Android SDK</td>
-<td>API nivel 33 (Android 13)</td>
-<td>Herramientas de desarrollo Android</td>
+<td>API 级别 36（Android 16）</td>
+<td>Android 开发工具</td>
 </tr>
 </table>
 
-### Configuración del Entorno
+### 环境配置
 
 ```bash
-# Clonar el repositorio
-git clone https://github.com/Arturo254/OpenTune.git
+# 克隆仓库
+git clone https://github.com/fuyuhin/OpenTune.git
 
-# Navegar al directorio del proyecto
+# 进入项目目录
 cd OpenTune
 
-# Actualizar submódulos (si los hay)
+# 更新子模块（如有）
 git submodule update --init --recursive
 ```
 
-### Métodos de Compilación
+### 编译方法
 
-#### Compilación con Android Studio
+#### 使用 Android Studio
 
-1. Abre Android Studio
-2. Selecciona "Abrir un proyecto existente de Android Studio"
-3. Navega y selecciona el directorio de OpenTune
-4. Espera a que se complete la sincronización del proyecto y la indexación
-5. Selecciona Construir → Construir Bundle(s) / APK(s) → Construir APK(s)
+1. 打开 Android Studio
+2. 选择"打开现有 Android Studio 项目"
+3. 浏览并选择 OpenTune 目录
+4. 等待项目同步和索引完成
+5. 选择"构建 → 构建 Bundle/APK → 构建 APK"
 
-#### Compilación por Línea de Comandos
+#### 命令行编译
 
 ```bash
-# Construir versión de producción
-./gradlew assembleRelease
+# 编译 Release 版本（ARM64）
+./gradlew assembleArm64Release
 
-# Construir versión de depuración
-./gradlew assembleDebug
+# 编译 Debug 版本（ARM64）
+./gradlew assembleArm64Debug
 
-# Construcción completa con pruebas
+# 完整构建含测试
 ./gradlew build
 
-# Ejecutar pruebas unitarias
+# 运行单元测试
 ./gradlew test
 
-# Limpiar construcción
+# 清理构建
 ./gradlew clean
 ```
 
-> **Nota**: Los archivos APK compilados se ubicarán en el directorio `app/build/outputs/apk/`.
+> **说明**：编译完成的 APK 位于 `app/build/outputs/apk/` 目录下。
 
 ---
 
-## Contribuciones
+## 贡献指南
 
-### Código de Conducta
+### 行为准则
 
-Todos los participantes en este proyecto deben adherirse a nuestro código de conducta que promueve un entorno inclusivo, respetuoso y constructivo. Por favor, revisa el [Código de Conducta completo](https://github.com/Arturo254/OpenTune/blob/master/CODE_OF_CONDUCT.md) antes de contribuir.
+所有参与者须遵守[行为准则](https://github.com/fuyuhin/OpenTune/blob/master/CODE_OF_CONDUCT.md)，共同维护包容、尊重、建设性的社区环境。
 
-### Traducción
+### 开发流程
 
-Ayuda a traducir OpenTune a tu idioma o mejorar las traducciones existentes:
-
-<div align="center">
-  
-[![POEditor](https://img.shields.io/badge/POEditor-2196F3?style=for-the-badge&logo=translate&logoColor=white)](https://poeditor.com/join/project/208BwCVazA)
-[![Crowdin](https://img.shields.io/badge/Crowdin-2E3440?style=for-the-badge&logo=crowdin&logoColor=white)](https://crowdin.com/project/opentune)
-
-</div>
-
-### Canales de Comunidad
-
-<div align="center">
-  
-[![Chat de Telegram](https://img.shields.io/badge/Telegram-Chat-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white)](https://t.me/OpenTune_chat)
-[![Actualizaciones de Telegram](https://img.shields.io/badge/Telegram-Actualizaciones-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white)](https://t.me/opentune_updates)
-
-</div>
-
-### Flujo de Trabajo de Desarrollo
-
-1. **Revisión de Issues**: Verifica [issues abiertas](https://github.com/Arturo254/OpenTune/issues) o crea una nueva describiendo el problema o característica
-2. **Fork del Repositorio**: Crea un fork personal del repositorio
-3. **Rama de Característica**: Crea una rama para tu característica (`git checkout -b feature/nueva-caracteristica`)
-4. **Implementación**: Implementa cambios siguiendo las convenciones de código del proyecto
-5. **Pruebas**: Asegúrate de que el código pase todas las pruebas (`./gradlew test`)
-6. **Commit**: Realiza commits con mensajes descriptivos (`git commit -m 'feat: añadir nueva característica'`)
-7. **Push de Cambios**: Sube cambios a tu fork (`git push origin feature/nueva-caracteristica`)
-8. **Pull Request**: Abre un PR detallando los cambios y referenciando la issue correspondiente
-
-> **Directrices de Desarrollo**: Revisa nuestras [directrices de contribución](https://github.com/Arturo254/OpenTune/blob/master/CONTRIBUTING.md) para información detallada sobre el proceso de desarrollo, estándares de código y flujo de trabajo.
+1. **查看 Issues**：检查[现有 Issues](https://github.com/fuyuhin/OpenTune/issues) 或新建一个描述问题或功能需求
+2. **Fork 仓库**：创建个人 Fork
+3. **创建分支**：为新功能创建分支（`git checkout -b feature/new-feature`）
+4. **实现功能**：遵循项目代码规范进行开发
+5. **测试**：确保代码通过所有测试（`./gradlew test`）
+6. **提交**：使用描述性提交信息（`git commit -m 'feat: 添加新功能'`）
+7. **推送**：将更改推送到你的 Fork（`git push origin feature/new-feature`）
+8. **Pull Request**：提交 PR 并详细说明更改内容
 
 ---
 
-## Apoya el Proyecto
+## 致谢
 
-Si encuentras valor en **OpenTune** y quieres contribuir a su desarrollo continuo, considera hacer una donación. Tu apoyo financiero nos permite:
+特别感谢以下贡献者和协作者：
 
-- Implementar nuevas características y mejoras
-- Corregir errores y optimizar el rendimiento
-- Mantener la infraestructura del proyecto
-- Dedicar más tiempo al desarrollo y mantenimiento
-
-<div align="center">
-  
-[![GitHub Sponsors](https://img.shields.io/badge/GitHub_Sponsors-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/sponsors/Arturo254)
-[![PayPal](https://img.shields.io/badge/PayPal-00457C?style=for-the-badge&logo=paypal&logoColor=white)](mailto:cervantesarturo254@gmail.com)
-
-</div>
-
-> **Nota**: Las donaciones son completamente opcionales. OpenTune siempre será gratuito y de código abierto, independientemente del apoyo financiero recibido.
+- **ArchiveTune** — 初始代码及灵感来源
+- **Vivi Music** — 设计灵感
+- **Fabito02** — 从一开始的全力支持
+- **社区翻译者** — 让 OpenTune 走向全球
+- **Beta 测试者** — 帮助提升稳定性和可用性
 
 ---
 
-## Reconocimientos
-
-Agradecimientos especiales a los siguientes contribuidores y colaboradores:
-
-- **ArchiveTune** - Código Inicial e inspiración
-‎Vivi Music (Inspiración de diseño)
-- **Fabito02** - Apoyo incondicional desde el principio
-- **Traductores de la comunidad** - Haciendo OpenTune accesible mundialmente
-- **Testers beta** - Ayudando a mejorar la estabilidad y usabilidad
-
----
-
-## Licencia
+## 许可证
 
 **Copyright © 2025 Arturo Cervantes**
 
-Este programa es software libre: puedes redistribuirlo y/o modificarlo bajo los términos de la Licencia Pública General GNU publicada por la Free Software Foundation, ya sea la versión 3 de la Licencia, o (a tu elección) cualquier versión posterior.
+本程序为自由软件：你可以在自由软件基金会发布的 GNU 通用公共许可证条款下重新分发和/或修改它，版本 3 或（根据你的选择）任何更高版本。
 
-Este programa se distribuye con la esperanza de que sea útil, pero **SIN NINGUNA GARANTÍA**; ni siquiera la garantía implícita de COMERCIABILIDAD o IDONEIDAD PARA UN PROPÓSITO PARTICULAR. Consulta la [Licencia Pública General GNU](https://github.com/Arturo254/OpenTune/blob/main/LICENSE) para más detalles.
+本程序的发布是希望它有用，但**不附带任何保证**；甚至不包含对适销性或特定目的适用性的隐含保证。详情请参阅 [GNU 通用公共许可证](https://github.com/fuyuhin/OpenTune/blob/main/LICENSE)。
 
 <div align="center">
   
-[![GPL v3](https://img.shields.io/badge/Licencia-GPLv3-blue.svg?style=for-the-badge&logo=gnu&logoColor=white)](https://www.gnu.org/licenses/gpl-3.0)
+[![GPL v3](https://img.shields.io/badge/许可证-GPLv3-blue.svg?style=for-the-badge&logo=gnu&logoColor=white)](https://www.gnu.org/licenses/gpl-3.0)
 
 </div>
-
-> **Importante**: Cualquier uso comercial no autorizado de este software o sus derivados constituye una violación de los términos de licencia.
 
 ---
 
 <div align="center">
-  <p><strong>© 2023-2024 Proyectos de Código Abierto</strong></p>
-  <p>Desarrollado con pasión por <a href="https://github.com/Arturo254">Arturo Cervantes</a></p>
+  <p><strong>© 2023-2025 OpenTune 开源项目</strong></p>
   
-  <br>
-  
-  [![GitHub](https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white)](https://github.com/Arturo254)
-  [![Email](https://img.shields.io/badge/Email-D14836?style=for-the-badge&logo=gmail&logoColor=white)](mailto:cervantesarturo254@gmail.com)
-  
+  [![GitHub](https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white)](https://github.com/fuyuhin/OpenTune)
 </div>
