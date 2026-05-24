@@ -8,6 +8,7 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Color
 import android.widget.RemoteViews
 import com.arturo254.opentune.MainActivity
 import com.arturo254.opentune.R
@@ -47,6 +48,7 @@ class MusicWidgetProvider : AppWidgetProvider() {
         fun updateWidget(context: Context, manager: AppWidgetManager, widgetId: Int) {
             val views = RemoteViews(context.packageName, R.layout.widget_music_player)
             views.setTextViewText(R.id.widget_song_title, context.getString(R.string.not_playing))
+            applyButtonTints(views)
             setClickListeners(context, views)
             manager.updateAppWidget(widgetId, views)
         }
@@ -68,6 +70,7 @@ class MusicWidgetProvider : AppWidgetProvider() {
             views.setTextViewText(R.id.widget_artist_name, artist.orEmpty())
             val playPauseIcon = if (isPlaying) R.drawable.ic_pause_white else R.drawable.ic_play_white
             views.setImageViewResource(R.id.widget_btn_play_pause, playPauseIcon)
+            applyButtonTints(views)
             setClickListeners(context, views)
             manager.updateAppWidget(widgetId, views)
 
@@ -87,6 +90,14 @@ class MusicWidgetProvider : AppWidgetProvider() {
                 views.setImageViewResource(R.id.widget_album_art, R.drawable.ic_music_placeholder)
                 manager.updateAppWidget(widgetId, views)
             }
+        }
+
+        private fun applyButtonTints(views: RemoteViews) {
+            // Set tints programmatically — android:tint is not reliable in RemoteViews
+            views.setInt(R.id.widget_btn_prev, "setColorFilter", Color.WHITE)
+            views.setInt(R.id.widget_btn_next, "setColorFilter", Color.WHITE)
+            // Play button sits on white circle background, so icon must be dark
+            views.setInt(R.id.widget_btn_play_pause, "setColorFilter", Color.BLACK)
         }
 
         private fun setClickListeners(context: Context, views: RemoteViews) {

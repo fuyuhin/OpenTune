@@ -108,6 +108,10 @@
     private void readObject(java.io.ObjectInputStream);
 }
 
+## Widget Provider
+# AppWidgetProvider is referenced by name in AndroidManifest.xml
+-keep class com.arturo254.opentune.widget.MusicWidgetProvider { *; }
+
 ## Media3 Protection Rules
 # Protect Guava from conflicts with system versions
 -keep class com.google.common.** { *; }

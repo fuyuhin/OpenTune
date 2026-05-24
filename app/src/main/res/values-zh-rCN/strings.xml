@@ -757,4 +757,57 @@
     <string name="aod_show_progress">显示进度条</string>
     <string name="aod_show_controls">显示控制按钮</string>
     <string name="aod_show_controls_description">上一首、播放/暂停、下一首</string>
+
+    <!-- AOD 自动激活 -->
+    <string name="aod_auto_activation_title">自动激活</string>
+    <string name="aod_auto_activation_label">无操作时长</string>
+    <string name="aod_auto_activation_description">在设定的无操作时间后自动激活息屏显示</string>
+    <string name="aod_auto_never">从不</string>
+    <string name="aod_auto_never_short">从不</string>
+    <string name="aod_auto_15s">15 秒</string>
+    <string name="aod_auto_30s">30 秒</string>
+    <string name="aod_auto_1m">1 分钟</string>
+    <string name="aod_auto_2m">2 分钟</string>
+    <string name="aod_auto_2m_short">2 分钟</string>
+
+    <!-- AOD 全屏 -->
+    <string name="aod_fullscreen_title">全屏显示</string>
+    <string name="aod_fullscreen_label">沉浸模式</string>
+    <string name="aod_fullscreen_description">隐藏系统状态栏、导航栏和时钟</string>
+
+    <!-- 外部下载器 -->
+    <string name="external_downloader">外部下载器</string>
+    <string name="external_downloader_desc">通过包名使用外部应用下载歌曲</string>
+    <string name="external_downloader_package">下载器应用包名</string>
+    <string name="external_downloader_package_desc">外部下载器应用的包名（例如 com.deniscerri.ytdl）</string>
+    <string name="open_with_downloader">用下载器打开</string>
+    <string name="external_downloader_not_installed">未安装外部下载器应用</string>
+    <string name="external_downloader_not_configured">未配置外部下载器，请在设置 → 播放器中设置。</string>
+
+    <!-- 快速拨号 -->
+    <string name="speed_dial">快速拨号</string>
+    <string name="speed_dial_random">随机播放快速拨号歌曲</string>
+    <string name="pin_to_speed_dial">固定到快速拨号</string>
+    <string name="remove_from_speed_dial">从快速拨号中移除</string>
+
+    <!-- 故障排除 -->
+    <string name="troubleshooter">故障排除</string>
+    <string name="troubleshooter_desc">清除歌曲缓存并重置过期的访客数据，以解决播放错误。</string>
+    <string name="troubleshooter_confirm_desc">将清除临时歌曲缓存并重置访客数据，下载内容和音乐库不受影响。</string>
+    <string name="troubleshooter_run">运行故障排除</string>
+    <string name="troubleshooter_running">正在修复…</string>
+    <string name="troubleshooter_done">修复已成功应用。如问题仍然存在，请重启应用。</string>
+
+    <!-- 其他缺失翻译 -->
+    <string name="confirm">确认</string>
+    <string name="contributors">贡献者</string>
+    <string name="social_links">社交网络</string>
+    <string name="view_license">在 GitHub 上查看完整许可证</string>
+    <string name="paste">粘贴</string>
+    <string name="player_design_v7">沉浸式</string>
+    <string name="liquid_glass_navbar">液态玻璃导航栏</string>
+    <string name="music_recognition">音乐识别</string>
+    <string name="wakelock">播放时保持 CPU 唤醒</string>
+    <string name="wakelock_desc">通过持有 CPU 唤醒锁防止系统中断音乐播放</string>
+    <string name="playback_requires_youtube_music_confirmation">请在 YouTube Music 中确认播放，然后返回 OpenTune。</string>
 </resources>
