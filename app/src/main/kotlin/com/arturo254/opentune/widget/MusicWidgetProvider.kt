@@ -13,6 +13,7 @@ import android.graphics.Paint
 import android.graphics.PorterDuff
 import android.graphics.PorterDuffXfermode
 import android.graphics.RectF
+import android.view.View
 import android.widget.RemoteViews
 import androidx.media3.common.Player
 import com.arturo254.opentune.MainActivity
@@ -60,7 +61,11 @@ class MusicWidgetProvider : AppWidgetProvider() {
             views.setTextViewText(R.id.widget_song_title, context.getString(R.string.not_playing))
             views.setTextViewText(R.id.widget_artist_name, "")
             views.setTextViewText(R.id.widget_album_name, "")
-            applyButtonTints(views, isLiked = false, repeatMode = Player.REPEAT_MODE_OFF)
+            views.setViewVisibility(R.id.widget_artist_name, View.GONE)
+            views.setViewVisibility(R.id.widget_album_name, View.GONE)
+            // Empty state: clear any stale image so the anime placeholder never shows
+            views.setImageViewResource(R.id.widget_album_art, android.R.color.transparent)
+            applyButtonStates(views, isLiked = false, repeatMode = Player.REPEAT_MODE_OFF)
             setClickListeners(context, views)
             manager.updateAppWidget(widgetId, views)
         }
@@ -82,11 +87,24 @@ class MusicWidgetProvider : AppWidgetProvider() {
                 R.id.widget_song_title,
                 title?.ifBlank { null } ?: context.getString(R.string.not_playing),
             )
+
+            val hasArtist = !artist.isNullOrBlank()
             views.setTextViewText(R.id.widget_artist_name, artist.orEmpty())
+            views.setViewVisibility(
+                R.id.widget_artist_name,
+                if (hasArtist) View.VISIBLE else View.GONE,
+            )
+
+            val hasAlbum = !album.isNullOrBlank()
             views.setTextViewText(R.id.widget_album_name, album.orEmpty())
+            views.setViewVisibility(
+                R.id.widget_album_name,
+                if (hasAlbum) View.VISIBLE else View.GONE,
+            )
+
             val playPauseIcon = if (isPlaying) R.drawable.ic_pause_white else R.drawable.ic_play_white
             views.setImageViewResource(R.id.widget_btn_play_pause, playPauseIcon)
-            applyButtonTints(views, isLiked, repeatMode)
+            applyButtonStates(views, isLiked, repeatMode)
             setClickListeners(context, views)
             manager.updateAppWidget(widgetId, views)
 
@@ -97,38 +115,39 @@ class MusicWidgetProvider : AppWidgetProvider() {
                         if (bitmap != null) {
                             views.setImageViewBitmap(R.id.widget_album_art, bitmap)
                         } else {
-                            views.setImageViewResource(R.id.widget_album_art, R.drawable.ic_music_placeholder)
+                            views.setImageViewResource(R.id.widget_album_art, android.R.color.transparent)
                         }
                         manager.updateAppWidget(widgetId, views)
                     }
                 }
             } else {
-                views.setImageViewResource(R.id.widget_album_art, R.drawable.ic_music_placeholder)
+                views.setImageViewResource(R.id.widget_album_art, android.R.color.transparent)
                 manager.updateAppWidget(widgetId, views)
             }
         }
 
-        private fun applyButtonTints(views: RemoteViews, isLiked: Boolean, repeatMode: Int) {
-            // Tints set via setColorFilter — android:tint is unreliable in RemoteViews
+        /**
+         * Apply icon variant + white colour filter for every control.
+         * Like / repeat convey their state via icon (border ↔ filled,
+         * off / one / all) — no coloured tint.
+         */
+        private fun applyButtonStates(views: RemoteViews, isLiked: Boolean, repeatMode: Int) {
             views.setInt(R.id.widget_btn_prev, "setColorFilter", Color.WHITE)
             views.setInt(R.id.widget_btn_next, "setColorFilter", Color.WHITE)
-            // Play button sits on a white circle background, so icon must be dark
+            // Play sits on a white circle, so its icon must stay dark to be visible
             views.setInt(R.id.widget_btn_play_pause, "setColorFilter", Color.BLACK)
 
-            // Like button: filled (yellow) when liked, outlined (white) when not
             val likeIcon = if (isLiked) R.drawable.favorite else R.drawable.favorite_border
             views.setImageViewResource(R.id.widget_btn_like, likeIcon)
-            val likeTint = if (isLiked) Color.parseColor("#FFD700") else Color.WHITE
-            views.setInt(R.id.widget_btn_like, "setColorFilter", likeTint)
+            views.setInt(R.id.widget_btn_like, "setColorFilter", Color.WHITE)
 
-            // Repeat button icon and tint based on current mode
-            val (repeatIcon, repeatTint) = when (repeatMode) {
-                Player.REPEAT_MODE_ONE -> Pair(R.drawable.repeat_one_on, Color.parseColor("#1DB954"))
-                Player.REPEAT_MODE_ALL -> Pair(R.drawable.repeat_on, Color.parseColor("#1DB954"))
-                else -> Pair(R.drawable.repeat, Color.WHITE)
+            val repeatIcon = when (repeatMode) {
+                Player.REPEAT_MODE_ONE -> R.drawable.repeat_one_on
+                Player.REPEAT_MODE_ALL -> R.drawable.repeat_on
+                else -> R.drawable.repeat
             }
             views.setImageViewResource(R.id.widget_btn_repeat, repeatIcon)
-            views.setInt(R.id.widget_btn_repeat, "setColorFilter", repeatTint)
+            views.setInt(R.id.widget_btn_repeat, "setColorFilter", Color.WHITE)
         }
 
         private fun setClickListeners(context: Context, views: RemoteViews) {
@@ -176,10 +195,6 @@ class MusicWidgetProvider : AppWidgetProvider() {
             )
         }
 
-        /**
-         * Downloads album art, center-crops to a square, and applies rounded corners
-         * so the image matches the widget's 12dp corner radius visually.
-         */
         private fun loadAndRoundBitmap(url: String): Bitmap? = try {
             val connection = URL(url).openConnection() as HttpURLConnection
             connection.connectTimeout = 5000
@@ -192,16 +207,18 @@ class MusicWidgetProvider : AppWidgetProvider() {
             null
         }
 
+        /**
+         * Center-crops to a square and rounds corners with ~15% radius, matching
+         * the widget's 16dp outer corner radius at the 110dp art size visually.
+         */
         private fun makeSquareRounded(bitmap: Bitmap): Bitmap {
-            // Center-crop to square
             val size = minOf(bitmap.width, bitmap.height)
             val x = (bitmap.width - size) / 2
             val y = (bitmap.height - size) / 2
             val square = if (x == 0 && y == 0) bitmap
                          else Bitmap.createBitmap(bitmap, x, y, size, size)
 
-            // Apply rounded corners (~12% of size ≈ 12dp at typical widget art resolution)
-            val radius = size * 0.12f
+            val radius = size * 0.15f
             val output = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
             val canvas = Canvas(output)
             val paint = Paint(Paint.ANTI_ALIAS_FLAG)

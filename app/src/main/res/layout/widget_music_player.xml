@@ -3,32 +3,32 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/widget_background"
-    android:orientation="horizontal"
-    android:padding="10dp"
-    android:gravity="center_vertical">
+    android:orientation="horizontal">
 
     <!--
-        Square album art: fixed 84dp so it matches the inner height of a 4×2 widget
-        (110dp outer - 2×10dp padding = 90dp, 84dp leaves a little breathing room).
-        Rounded corners (12dp) are applied to the loaded bitmap programmatically;
-        the background provides a fallback rounded rect when no art is loaded.
-        android:tint is intentionally absent — colour filters applied in code.
+        Album art: edge-to-edge on the left (no outer padding so it touches
+        top/bottom widget borders). Bitmap is rounded in code to match the
+        widget's 16dp outer corner radius. No android:src — the empty state
+        shows only the subtle rounded background, no anime placeholder.
     -->
     <ImageView
         android:id="@+id/widget_album_art"
-        android:layout_width="84dp"
-        android:layout_height="84dp"
+        android:layout_width="110dp"
+        android:layout_height="110dp"
+        android:layout_gravity="center_vertical"
         android:scaleType="centerCrop"
-        android:src="@drawable/ic_music_placeholder"
         android:background="@drawable/widget_art_background" />
 
-    <!-- Right column: title / artist / album / controls -->
+    <!-- Right column with its own padding (shifts content away from the art) -->
     <LinearLayout
         android:layout_width="0dp"
         android:layout_height="match_parent"
         android:layout_weight="1"
         android:orientation="vertical"
-        android:layout_marginStart="10dp"
+        android:paddingStart="16dp"
+        android:paddingEnd="14dp"
+        android:paddingTop="10dp"
+        android:paddingBottom="10dp"
         android:gravity="center_vertical">
 
         <TextView
@@ -46,7 +46,6 @@
             android:id="@+id/widget_artist_name"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text=""
             android:textColor="#CCFFFFFF"
             android:textSize="11sp"
             android:maxLines="1"
@@ -57,7 +56,6 @@
             android:id="@+id/widget_album_name"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text=""
             android:textColor="#99FFFFFF"
             android:textSize="11sp"
             android:maxLines="1"
@@ -65,86 +63,79 @@
             android:layout_marginTop="1dp" />
 
         <!--
-            Controls: 5 FrameLayouts with equal weight so buttons spread evenly.
-            Play button is larger (40dp) and overflows its slot visually;
-            prev/next/like/repeat use 26dp icons centred in their slots.
-            <View> is NOT in the RemoteViews supported-view list — FrameLayout IS.
+            Smaller, white-only controls. Like and repeat use icon variants
+            to convey state (border/filled, off/one/all) rather than colour.
         -->
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="40dp"
+            android:layout_height="32dp"
             android:orientation="horizontal"
-            android:layout_marginTop="4dp">
+            android:layout_marginTop="6dp">
 
-            <!-- Like / Favourite -->
             <FrameLayout
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1">
                 <ImageButton
                     android:id="@+id/widget_btn_like"
-                    android:layout_width="26dp"
-                    android:layout_height="26dp"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
                     android:layout_gravity="center"
                     android:src="@drawable/favorite_border"
                     android:background="@android:color/transparent"
                     android:scaleType="fitCenter" />
             </FrameLayout>
 
-            <!-- Previous track -->
             <FrameLayout
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1">
                 <ImageButton
                     android:id="@+id/widget_btn_prev"
-                    android:layout_width="26dp"
-                    android:layout_height="26dp"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
                     android:layout_gravity="center"
                     android:src="@drawable/ic_widget_prev"
                     android:background="@android:color/transparent"
                     android:scaleType="fitCenter" />
             </FrameLayout>
 
-            <!-- Play / Pause (larger, intentionally overflows slot) -->
             <FrameLayout
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1">
                 <ImageButton
                     android:id="@+id/widget_btn_play_pause"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
                     android:layout_gravity="center"
                     android:src="@drawable/ic_play_white"
                     android:background="@drawable/widget_play_button_bg"
                     android:scaleType="fitCenter" />
             </FrameLayout>
 
-            <!-- Next track -->
             <FrameLayout
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1">
                 <ImageButton
                     android:id="@+id/widget_btn_next"
-                    android:layout_width="26dp"
-                    android:layout_height="26dp"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
                     android:layout_gravity="center"
                     android:src="@drawable/ic_widget_next"
                     android:background="@android:color/transparent"
                     android:scaleType="fitCenter" />
             </FrameLayout>
 
-            <!-- Repeat mode -->
             <FrameLayout
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1">
                 <ImageButton
                     android:id="@+id/widget_btn_repeat"
-                    android:layout_width="26dp"
-                    android:layout_height="26dp"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
                     android:layout_gravity="center"
                     android:src="@drawable/repeat"
                     android:background="@android:color/transparent"

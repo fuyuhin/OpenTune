@@ -198,6 +198,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.distinctUntilChangedBy
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOn
@@ -1453,7 +1454,10 @@ class MusicService :
         val metadata = currentMediaMetadata.value
         val title = metadata?.title
         val artist = metadata?.artists?.joinToString(", ") { it.name }
-        val album = metadata?.album?.title
+        // Metadata.album.title is sometimes empty for streamed tracks even though
+        // the DB Song row has albumName populated — fall back to the DB value.
+        val album = metadata?.album?.title?.takeIf { it.isNotBlank() }
+            ?: currentSong.value?.song?.albumName?.takeIf { it.isNotBlank() }
         val isPlaying = player.isPlaying || (player.playWhenReady && player.playbackState == Player.STATE_BUFFERING)
         val artUrl = metadata?.thumbnailUrl
         val isLiked = currentSong.value?.song?.liked == true
@@ -1463,6 +1467,22 @@ class MusicService :
                 this, manager, id,
                 title, artist, album, isPlaying, artUrl, isLiked, repeatMode,
             )
+        }
+    }
+
+    /**
+     * Runs [block] on the main thread once the persisted queue has been restored.
+     * If the service was just started fresh by a widget tap, the player has no
+     * media items yet — we wait for queueRestoreCompleted before touching it.
+     */
+    private fun whenQueueReady(block: () -> Unit) {
+        if (queueRestoreCompleted.value || player.mediaItemCount > 0) {
+            block()
+        } else {
+            scope.launch {
+                queueRestoreCompleted.filter { it }.first()
+                withContext(Dispatchers.Main) { block() }
+            }
         }
     }
 
@@ -5015,18 +5035,20 @@ class MusicService :
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
         when (intent?.action) {
-            MusicWidgetProvider.ACTION_WIDGET_PLAY_PAUSE -> {
-                if (player.playbackState == Player.STATE_IDLE || player.playbackState == Player.STATE_ENDED) {
-                    player.prepare()
-                    player.play()
-                } else {
-                    player.playWhenReady = !player.playWhenReady
+            MusicWidgetProvider.ACTION_WIDGET_PLAY_PAUSE -> whenQueueReady {
+                when {
+                    player.mediaItemCount == 0 -> { /* nothing to play */ }
+                    player.playbackState == Player.STATE_IDLE || player.playbackState == Player.STATE_ENDED -> {
+                        player.prepare()
+                        player.play()
+                    }
+                    else -> player.playWhenReady = !player.playWhenReady
                 }
             }
-            MusicWidgetProvider.ACTION_WIDGET_NEXT -> {
+            MusicWidgetProvider.ACTION_WIDGET_NEXT -> whenQueueReady {
                 if (player.hasNextMediaItem()) player.seekToNextMediaItem()
             }
-            MusicWidgetProvider.ACTION_WIDGET_PREV -> {
+            MusicWidgetProvider.ACTION_WIDGET_PREV -> whenQueueReady {
                 player.seekToPreviousMediaItem()
             }
             MusicWidgetProvider.ACTION_WIDGET_LIKE -> {
