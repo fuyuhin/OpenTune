@@ -757,10 +757,4 @@
     <string name="aod_show_progress">显示进度条</string>
     <string name="aod_show_controls">显示控制按钮</string>
     <string name="aod_show_controls_description">上一首、播放/暂停、下一首</string>
-
-    <!-- 桌面小组件 -->
-    <string name="not_playing">未在播放</string>
-    <string name="play_pause">播放/暂停</string>
-    <string name="previous">上一首</string>
-    <string name="album_art">专辑封面</string>
 </resources>
