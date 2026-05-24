@@ -6,71 +6,92 @@
     android:orientation="horizontal">
 
     <!--
-        Album art: edge-to-edge on the left (no outer padding so it touches
-        top/bottom widget borders). Bitmap is rounded in code to match the
-        widget's 16dp outer corner radius. No android:src — the empty state
-        shows only the subtle rounded background, no anime placeholder.
+        Album art: fills full widget height for maximum visual impact.
+        Width is fixed at 120dp; scaleType=centerCrop handles any bitmap ratio.
+        Bitmap is rounded in code to match the widget's 16dp corner radius.
+        No android:src — empty state shows only the subtle rounded background.
     -->
     <ImageView
         android:id="@+id/widget_album_art"
-        android:layout_width="110dp"
-        android:layout_height="110dp"
-        android:layout_gravity="center_vertical"
+        android:layout_width="120dp"
+        android:layout_height="match_parent"
         android:scaleType="centerCrop"
         android:background="@drawable/widget_art_background" />
 
-    <!-- Right column with its own padding (shifts content away from the art) -->
+    <!-- Right column: text fills remaining space; controls pinned at bottom -->
     <LinearLayout
         android:layout_width="0dp"
         android:layout_height="match_parent"
         android:layout_weight="1"
         android:orientation="vertical"
-        android:paddingStart="16dp"
-        android:paddingEnd="14dp"
-        android:paddingTop="10dp"
-        android:paddingBottom="10dp"
-        android:gravity="center_vertical">
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="6dp">
 
-        <TextView
-            android:id="@+id/widget_song_title"
+        <!-- Text section: grows to fill space above controls -->
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/not_playing"
-            android:textColor="#FFFFFFFF"
-            android:textSize="14sp"
-            android:textStyle="bold"
-            android:maxLines="1"
-            android:ellipsize="end" />
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center_vertical">
 
-        <TextView
-            android:id="@+id/widget_artist_name"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textColor="#CCFFFFFF"
-            android:textSize="11sp"
-            android:maxLines="1"
-            android:ellipsize="end"
-            android:layout_marginTop="1dp" />
+            <TextView
+                android:id="@+id/widget_song_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/not_playing"
+                android:textColor="#FFFFFFFF"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:maxLines="2"
+                android:ellipsize="end" />
 
-        <TextView
-            android:id="@+id/widget_album_name"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textColor="#99FFFFFF"
-            android:textSize="11sp"
-            android:maxLines="1"
-            android:ellipsize="end"
-            android:layout_marginTop="1dp" />
+            <TextView
+                android:id="@+id/widget_artist_name"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="#CCFFFFFF"
+                android:textSize="11sp"
+                android:maxLines="2"
+                android:ellipsize="end"
+                android:layout_marginTop="1dp" />
+
+            <TextView
+                android:id="@+id/widget_album_name"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="#99FFFFFF"
+                android:textSize="11sp"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:layout_marginTop="1dp" />
+
+            <!-- Current lyrics line (NetEase-style); shown only when lyrics are enabled -->
+            <TextView
+                android:id="@+id/widget_lyrics"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="#AAFFFFFF"
+                android:textSize="10sp"
+                android:textStyle="italic"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:layout_marginTop="3dp"
+                android:visibility="gone" />
+
+        </LinearLayout>
 
         <!--
-            Smaller, white-only controls. Like and repeat use icon variants
-            to convey state (border/filled, off/one/all) rather than colour.
+            Controls: fixed height, 5 equal slots.
+            Like / repeat use icon variants to convey state.
+            Play sits on a white circle; icon must stay dark (BLACK filter).
         -->
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="32dp"
-            android:orientation="horizontal"
-            android:layout_marginTop="6dp">
+            android:layout_height="38dp"
+            android:orientation="horizontal">
 
             <FrameLayout
                 android:layout_width="0dp"
@@ -78,8 +99,8 @@
                 android:layout_weight="1">
                 <ImageButton
                     android:id="@+id/widget_btn_like"
-                    android:layout_width="20dp"
-                    android:layout_height="20dp"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
                     android:layout_gravity="center"
                     android:src="@drawable/favorite_border"
                     android:background="@android:color/transparent"
@@ -92,8 +113,8 @@
                 android:layout_weight="1">
                 <ImageButton
                     android:id="@+id/widget_btn_prev"
-                    android:layout_width="20dp"
-                    android:layout_height="20dp"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
                     android:layout_gravity="center"
                     android:src="@drawable/ic_widget_prev"
                     android:background="@android:color/transparent"
@@ -106,8 +127,8 @@
                 android:layout_weight="1">
                 <ImageButton
                     android:id="@+id/widget_btn_play_pause"
-                    android:layout_width="32dp"
-                    android:layout_height="32dp"
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
                     android:layout_gravity="center"
                     android:src="@drawable/ic_play_white"
                     android:background="@drawable/widget_play_button_bg"
@@ -120,8 +141,8 @@
                 android:layout_weight="1">
                 <ImageButton
                     android:id="@+id/widget_btn_next"
-                    android:layout_width="20dp"
-                    android:layout_height="20dp"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
                     android:layout_gravity="center"
                     android:src="@drawable/ic_widget_next"
                     android:background="@android:color/transparent"
@@ -134,8 +155,8 @@
                 android:layout_weight="1">
                 <ImageButton
                     android:id="@+id/widget_btn_repeat"
-                    android:layout_width="20dp"
-                    android:layout_height="20dp"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
                     android:layout_gravity="center"
                     android:src="@drawable/repeat"
                     android:background="@android:color/transparent"

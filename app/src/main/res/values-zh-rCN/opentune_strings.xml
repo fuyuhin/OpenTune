@@ -297,4 +297,7 @@
     <string name="play_pause">播放/暂停</string>
     <string name="previous">上一首</string>
     <string name="album_art">专辑封面</string>
+    <string name="widget">桌面小组件</string>
+    <string name="widget_show_lyrics">在小组件上显示歌词</string>
+    <string name="widget_show_lyrics_desc">在桌面小组件上实时显示当前歌词行</string>
 </resources>

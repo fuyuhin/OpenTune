@@ -122,6 +122,7 @@ import com.arturo254.opentune.constants.PlayerStreamClientKey
 import com.arturo254.opentune.constants.PlayerVolumeKey
 import com.arturo254.opentune.constants.RepeatModeKey
 import com.arturo254.opentune.constants.ShowLyricsKey
+import com.arturo254.opentune.constants.WidgetShowLyricsKey
 import com.arturo254.opentune.constants.SkipSilenceKey
 import com.arturo254.opentune.constants.MaxSongCacheSizeKey
 import com.arturo254.opentune.constants.SmartTrimmerKey
@@ -152,6 +153,7 @@ import com.arturo254.opentune.extensions.toMediaItem
 import com.arturo254.opentune.extensions.toPersistQueue
 import com.arturo254.opentune.extensions.toQueue
 import com.arturo254.opentune.lyrics.LyricsHelper
+import com.arturo254.opentune.lyrics.LyricsUtils
 import com.arturo254.opentune.models.PersistQueue
 import com.arturo254.opentune.models.PersistPlayerState
 import com.arturo254.opentune.models.toMediaMetadata
@@ -267,6 +269,9 @@ class MusicService :
     private val binder = MusicBinder()
     private var hasBoundClients = false
     private var idleStopJob: Job? = null
+    private var widgetLyricsJob: Job? = null
+    private var widgetLyricsMediaId: String? = null
+    private var currentWidgetLyricsLine: String? = null
 
     private lateinit var connectivityManager: ConnectivityManager
     lateinit var connectivityObserver: NetworkConnectivityObserver
@@ -1462,12 +1467,65 @@ class MusicService :
         val artUrl = metadata?.thumbnailUrl
         val isLiked = currentSong.value?.song?.liked == true
         val repeatMode = player.repeatMode
+        val currentId = metadata?.id
+
+        // Clear stale lyrics when the track changes
+        if (widgetLyricsMediaId != currentId) {
+            currentWidgetLyricsLine = null
+        }
+        if (isPlaying && currentId != null) {
+            startWidgetLyricsPolling(currentId)
+        } else {
+            stopWidgetLyricsPolling()
+        }
+
         for (id in ids) {
             MusicWidgetProvider.updateWidgetContent(
                 this, manager, id,
                 title, artist, album, isPlaying, artUrl, isLiked, repeatMode,
+                currentWidgetLyricsLine,
             )
         }
+    }
+
+    private fun startWidgetLyricsPolling(mediaId: String) {
+        if (widgetLyricsMediaId == mediaId && widgetLyricsJob?.isActive == true) return
+        widgetLyricsJob?.cancel()
+        widgetLyricsMediaId = mediaId
+        widgetLyricsJob = ioScope.launch {
+            val showLyrics = dataStore.data.map { it[WidgetShowLyricsKey] ?: false }.first()
+            if (!showLyrics) {
+                currentWidgetLyricsLine = null
+                return@launch
+            }
+            val lyricsText = database.lyrics(mediaId).first()?.lyrics
+            if (lyricsText.isNullOrBlank() || lyricsText == LyricsEntity.LYRICS_NOT_FOUND) {
+                currentWidgetLyricsLine = null
+                return@launch
+            }
+            val entries = LyricsUtils.parseLyrics(lyricsText)
+            if (entries.isEmpty()) {
+                currentWidgetLyricsLine = null
+                return@launch
+            }
+            while (isActive) {
+                val position = withContext(Dispatchers.Main) { player.currentPosition }
+                val idx = LyricsUtils.findCurrentLineIndex(entries, position)
+                val newLine = entries.getOrNull(idx)?.text?.trim()?.takeIf { it.isNotBlank() }
+                if (newLine != currentWidgetLyricsLine) {
+                    currentWidgetLyricsLine = newLine
+                    withContext(Dispatchers.Main) { notifyWidget() }
+                }
+                delay(1000)
+            }
+        }
+    }
+
+    private fun stopWidgetLyricsPolling() {
+        widgetLyricsJob?.cancel()
+        widgetLyricsJob = null
+        widgetLyricsMediaId = null
+        currentWidgetLyricsLine = null
     }
 
     /**

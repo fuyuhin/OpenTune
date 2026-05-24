@@ -306,4 +306,7 @@
     <string name="play_pause">Play/Pause</string>
     <string name="previous">Previous</string>
     <string name="album_art">Album art</string>
+    <string name="widget">Widget</string>
+    <string name="widget_show_lyrics">Show lyrics in widget</string>
+    <string name="widget_show_lyrics_desc">Display the current lyric line on the home screen widget</string>
 </resources>

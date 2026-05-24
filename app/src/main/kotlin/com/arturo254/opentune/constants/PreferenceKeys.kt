@@ -38,6 +38,7 @@ val SeekExtraSeconds = booleanPreferencesKey("seekExtraSeconds")
 val DisableBlurKey = booleanPreferencesKey("disableBlur")
 val BlurRadiusKey = floatPreferencesKey("blurRadius")
 val MiniPlayerLastAnchorKey = intPreferencesKey("miniPlayerLastAnchor")
+val WidgetShowLyricsKey = booleanPreferencesKey("widgetShowLyrics")
 
 enum class SliderStyle {
     Standard,

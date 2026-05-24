@@ -48,6 +48,7 @@ class MusicWidgetProvider : AppWidgetProvider() {
         const val EXTRA_ART_URL = "widget_art_url"
         const val EXTRA_IS_LIKED = "widget_is_liked"
         const val EXTRA_REPEAT_MODE = "widget_repeat_mode"
+        const val EXTRA_LYRICS_LINE = "widget_lyrics_line"
 
         // Actions handled by MusicService.onStartCommand
         const val ACTION_WIDGET_PLAY_PAUSE = "com.arturo254.opentune.widget.cmd.PLAY_PAUSE"
@@ -81,6 +82,7 @@ class MusicWidgetProvider : AppWidgetProvider() {
             artUrl: String?,
             isLiked: Boolean,
             repeatMode: Int,
+            lyricsLine: String? = null,
         ) {
             val views = RemoteViews(context.packageName, R.layout.widget_music_player)
             views.setTextViewText(
@@ -104,6 +106,11 @@ class MusicWidgetProvider : AppWidgetProvider() {
 
             val playPauseIcon = if (isPlaying) R.drawable.ic_pause_white else R.drawable.ic_play_white
             views.setImageViewResource(R.id.widget_btn_play_pause, playPauseIcon)
+
+            val hasLyrics = !lyricsLine.isNullOrBlank()
+            views.setTextViewText(R.id.widget_lyrics, lyricsLine.orEmpty())
+            views.setViewVisibility(R.id.widget_lyrics, if (hasLyrics) View.VISIBLE else View.GONE)
+
             applyButtonStates(views, isLiked, repeatMode)
             setClickListeners(context, views)
             manager.updateAppWidget(widgetId, views)
