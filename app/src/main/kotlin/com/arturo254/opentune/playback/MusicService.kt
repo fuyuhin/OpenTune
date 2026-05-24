@@ -180,6 +180,8 @@ import com.arturo254.opentune.constants.ListenBrainzTokenKey
 import com.arturo254.opentune.lastfm.LastFM
 import com.arturo254.opentune.constants.EnableLastFMScrobblingKey
 import com.arturo254.opentune.constants.LastFMUseNowPlaying
+import android.appwidget.AppWidgetManager
+import com.arturo254.opentune.widget.MusicWidgetProvider
 import com.arturo254.opentune.constants.ScrobbleDelayPercentKey
 import com.arturo254.opentune.constants.ScrobbleMinSongDurationKey
 import com.arturo254.opentune.constants.ScrobbleDelaySecondsKey
@@ -1440,6 +1442,22 @@ class MusicService :
             unregisterReceiver(bluetoothReceiver)
         } catch (_: Exception) {}
         bluetoothReceiverRegistered = false
+    }
+
+    fun notifyWidget() {
+        val manager = AppWidgetManager.getInstance(this) ?: return
+        val ids = manager.getAppWidgetIds(
+            android.content.ComponentName(this, MusicWidgetProvider::class.java)
+        )
+        if (ids.isEmpty()) return
+        val metadata = currentMediaMetadata.value
+        val title = metadata?.title
+        val artist = metadata?.artists?.joinToString(", ") { it.name }
+        val isPlaying = player.isPlaying || (player.playWhenReady && player.playbackState == Player.STATE_BUFFERING)
+        val artUrl = metadata?.thumbnailUrl
+        for (id in ids) {
+            MusicWidgetProvider.updateWidgetContent(this, manager, id, title, artist, isPlaying, artUrl)
+        }
     }
 
     private fun waitOnNetworkError() {
@@ -4059,6 +4077,16 @@ class MusicService :
     } else {
         ensurePresenceManager()
     }
+
+    if (events.containsAny(
+            Player.EVENT_MEDIA_METADATA_CHANGED,
+            Player.EVENT_IS_PLAYING_CHANGED,
+            Player.EVENT_PLAY_WHEN_READY_CHANGED,
+            Player.EVENT_PLAYBACK_STATE_CHANGED,
+        )
+    ) {
+        notifyWidget()
+    }
   }
 
 
@@ -4979,6 +5007,22 @@ class MusicService :
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
+        when (intent?.action) {
+            MusicWidgetProvider.ACTION_WIDGET_PLAY_PAUSE -> {
+                if (player.playbackState == Player.STATE_IDLE || player.playbackState == Player.STATE_ENDED) {
+                    player.prepare()
+                    player.play()
+                } else {
+                    player.playWhenReady = !player.playWhenReady
+                }
+            }
+            MusicWidgetProvider.ACTION_WIDGET_NEXT -> {
+                if (player.hasNextMediaItem()) player.seekToNextMediaItem()
+            }
+            MusicWidgetProvider.ACTION_WIDGET_PREV -> {
+                player.seekToPreviousMediaItem()
+            }
+        }
         return START_NOT_STICKY
     }
 
