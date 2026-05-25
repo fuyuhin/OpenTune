@@ -6,16 +6,16 @@
     android:orientation="horizontal">
 
     <!--
-        Album art: fixed 130dp×130dp square, anchored to the widget's
-        top-left corner with no margin so it touches the widget's top,
-        bottom, and left edges. The bitmap is rounded in code; its left
-        corners line up with the widget background's 16dp outer corners.
-        No android:src — empty state shows only the rounded background.
+        Album art: match_parent height so it always fills top-to-bottom.
+        Width is fixed at 140dp (wider than before) so it also expands
+        rightward. The square bitmap from makeSquareRounded + centerCrop
+        keeps the image square-looking even if widget height > width.
+        Left corners align with the widget background's 16dp radius.
     -->
     <ImageView
         android:id="@+id/widget_album_art"
-        android:layout_width="130dp"
-        android:layout_height="130dp"
+        android:layout_width="140dp"
+        android:layout_height="match_parent"
         android:scaleType="centerCrop"
         android:background="@drawable/widget_art_background" />
 
@@ -88,13 +88,10 @@
             android:layout_height="0dp"
             android:layout_weight="1" />
 
-        <!--
-            Controls: 5 equal slots. Like/repeat use icon variants to convey
-            state. Play sits on a white circle so its icon stays dark.
-        -->
+        <!-- Controls: 5 equal slots, all icons transparent background. -->
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="42dp"
+            android:layout_height="46dp"
             android:orientation="horizontal">
 
             <FrameLayout
@@ -103,8 +100,8 @@
                 android:layout_weight="1">
                 <ImageButton
                     android:id="@+id/widget_btn_like"
-                    android:layout_width="26dp"
-                    android:layout_height="26dp"
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
                     android:layout_gravity="center"
                     android:src="@drawable/favorite_border"
                     android:background="@android:color/transparent"
@@ -117,8 +114,8 @@
                 android:layout_weight="1">
                 <ImageButton
                     android:id="@+id/widget_btn_prev"
-                    android:layout_width="26dp"
-                    android:layout_height="26dp"
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
                     android:layout_gravity="center"
                     android:src="@drawable/ic_widget_prev"
                     android:background="@android:color/transparent"
@@ -131,11 +128,11 @@
                 android:layout_weight="1">
                 <ImageButton
                     android:id="@+id/widget_btn_play_pause"
-                    android:layout_width="42dp"
-                    android:layout_height="42dp"
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
                     android:layout_gravity="center"
                     android:src="@drawable/ic_play_white"
-                    android:background="@drawable/widget_play_button_bg"
+                    android:background="@android:color/transparent"
                     android:scaleType="fitCenter" />
             </FrameLayout>
 
@@ -145,8 +142,8 @@
                 android:layout_weight="1">
                 <ImageButton
                     android:id="@+id/widget_btn_next"
-                    android:layout_width="26dp"
-                    android:layout_height="26dp"
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
                     android:layout_gravity="center"
                     android:src="@drawable/ic_widget_next"
                     android:background="@android:color/transparent"
@@ -159,8 +156,8 @@
                 android:layout_weight="1">
                 <ImageButton
                     android:id="@+id/widget_btn_repeat"
-                    android:layout_width="26dp"
-                    android:layout_height="26dp"
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
                     android:layout_gravity="center"
                     android:src="@drawable/repeat"
                     android:background="@android:color/transparent"

@@ -141,8 +141,7 @@ class MusicWidgetProvider : AppWidgetProvider() {
         private fun applyButtonStates(views: RemoteViews, isLiked: Boolean, repeatMode: Int) {
             views.setInt(R.id.widget_btn_prev, "setColorFilter", Color.WHITE)
             views.setInt(R.id.widget_btn_next, "setColorFilter", Color.WHITE)
-            // Play sits on a white circle, so its icon must stay dark to be visible
-            views.setInt(R.id.widget_btn_play_pause, "setColorFilter", Color.BLACK)
+            views.setInt(R.id.widget_btn_play_pause, "setColorFilter", Color.WHITE)
 
             val likeIcon = if (isLiked) R.drawable.favorite else R.drawable.favorite_border
             views.setImageViewResource(R.id.widget_btn_like, likeIcon)
