@@ -239,8 +239,11 @@ class MusicWidgetProvider : AppWidgetProvider() {
             val fullH  = sizes?.maxByOrNull { it.height }?.height?.toInt()?.coerceAtLeast(80) ?: minH
             val smallH = sizes?.minByOrNull { it.height }?.height?.toInt()?.coerceIn(40, 110) ?: 56
 
-            fullViews.setViewLayoutWidth(R.id.widget_album_art,  fullH.toFloat(),  TypedValue.COMPLEX_UNIT_DIP)
-            smallViews.setViewLayoutWidth(R.id.widget_album_art, smallH.toFloat(), TypedValue.COMPLEX_UNIT_DIP)
+            // The art ImageView has 6dp top + 6dp bottom margin in both layouts, so its
+            // actual display height is (rowHeight - 12). Set width to match so it stays square.
+            val artVerticalMarginDp = 12
+            fullViews.setViewLayoutWidth(R.id.widget_album_art,  (fullH  - artVerticalMarginDp).coerceAtLeast(40).toFloat(), TypedValue.COMPLEX_UNIT_DIP)
+            smallViews.setViewLayoutWidth(R.id.widget_album_art, (smallH - artVerticalMarginDp).coerceAtLeast(20).toFloat(), TypedValue.COMPLEX_UNIT_DIP)
 
             return RemoteViews(
                 mapOf(

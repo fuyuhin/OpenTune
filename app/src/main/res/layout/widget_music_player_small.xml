@@ -10,6 +10,9 @@
         android:id="@+id/widget_album_art"
         android:layout_width="60dp"
         android:layout_height="match_parent"
+        android:layout_marginStart="6dp"
+        android:layout_marginTop="6dp"
+        android:layout_marginBottom="6dp"
         android:scaleType="centerCrop"
         android:background="@drawable/widget_art_background" />
 
