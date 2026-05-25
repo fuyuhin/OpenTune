@@ -71,7 +71,6 @@ class MusicWidgetProvider : AppWidgetProvider() {
         const val EXTRA_REPEAT_MODE = "widget_repeat_mode"
         const val EXTRA_LYRICS_LINE = "widget_lyrics_line"
 
-        // Actions handled by MusicService.onStartCommand
         const val ACTION_WIDGET_PLAY_PAUSE = "com.arturo254.opentune.widget.cmd.PLAY_PAUSE"
         const val ACTION_WIDGET_NEXT = "com.arturo254.opentune.widget.cmd.NEXT"
         const val ACTION_WIDGET_PREV = "com.arturo254.opentune.widget.cmd.PREV"
@@ -79,13 +78,14 @@ class MusicWidgetProvider : AppWidgetProvider() {
         const val ACTION_WIDGET_REPEAT = "com.arturo254.opentune.widget.cmd.REPEAT"
 
         fun updateWidget(context: Context, manager: AppWidgetManager, widgetId: Int) {
+            // artBitmap = null → transparent placeholder applied inside buildViews
             val views = buildViews(
                 context, manager, widgetId,
                 title = null, artist = null, album = null,
                 isPlaying = false, isLiked = false,
                 repeatMode = Player.REPEAT_MODE_OFF, lyricsLine = null,
+                artBitmap = null,
             )
-            views.setImageViewResource(R.id.widget_album_art, android.R.color.transparent)
             manager.updateAppWidget(widgetId, views)
         }
 
@@ -102,38 +102,41 @@ class MusicWidgetProvider : AppWidgetProvider() {
             repeatMode: Int,
             lyricsLine: String? = null,
         ) {
+            // Push immediately with transparent art placeholder.
+            // IMPORTANT: never call set*() on the returned RemoteViews — on API 31+ it is
+            // a composite (sizeMap) view and Android forbids modifying it after construction.
             val views = buildViews(
                 context, manager, widgetId,
                 title, artist, album, isPlaying, isLiked, repeatMode, lyricsLine,
+                artBitmap = null,
             )
-            views.setImageViewResource(R.id.widget_album_art, android.R.color.transparent)
             manager.updateAppWidget(widgetId, views)
 
             if (!artUrl.isNullOrBlank()) {
                 CoroutineScope(Dispatchers.IO).launch {
                     val bitmap = loadAndRoundBitmap(artUrl)
                     withContext(Dispatchers.Main) {
-                        if (bitmap != null) {
-                            views.setImageViewBitmap(R.id.widget_album_art, bitmap)
-                        } else {
-                            views.setImageViewResource(R.id.widget_album_art, android.R.color.transparent)
-                        }
-                        manager.updateAppWidget(widgetId, views)
+                        // Rebuild entirely with bitmap baked into each individual RemoteViews
+                        // before the composite is assembled — the only safe way on API 31+.
+                        val viewsWithArt = buildViews(
+                            context, manager, widgetId,
+                            title, artist, album, isPlaying, isLiked, repeatMode, lyricsLine,
+                            artBitmap = bitmap,
+                        )
+                        manager.updateAppWidget(widgetId, viewsWithArt)
                     }
                 }
             }
         }
 
         /**
-         * Builds the RemoteViews for a widget instance.
+         * Builds a fully configured [RemoteViews] ready to push to the widget host.
          *
-         * On API 31+: returns a responsive RemoteViews that automatically
-         * switches between the full (4×2) and compact (4×1) layouts as the
-         * user resizes the widget. Album art width is dynamically set to equal
-         * the widget's current height, producing a perfect square.
+         * Every `set*` call is made on the *individual* layout views **before** they are
+         * wrapped into a composite `RemoteViews(sizeMap)` on API 31+. Android throws
+         * [RuntimeException] if any `set*` is called on the composite after construction.
          *
-         * On older APIs: picks the appropriate layout based on widget height
-         * reported in the options bundle.
+         * @param artBitmap Already-rounded square bitmap, or null for a transparent placeholder.
          */
         private fun buildViews(
             context: Context,
@@ -146,10 +149,11 @@ class MusicWidgetProvider : AppWidgetProvider() {
             isLiked: Boolean,
             repeatMode: Int,
             lyricsLine: String?,
+            artBitmap: Bitmap?,
         ): RemoteViews {
             val options = manager.getAppWidgetOptions(widgetId)
             return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                buildResponsiveViews(context, options, title, artist, album, isPlaying, isLiked, repeatMode, lyricsLine)
+                buildResponsiveViews(context, options, title, artist, album, isPlaying, isLiked, repeatMode, lyricsLine, artBitmap)
             } else {
                 val heightDp = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 130)
                 val isCompact = heightDp < 100
@@ -162,6 +166,7 @@ class MusicWidgetProvider : AppWidgetProvider() {
                     isPlaying, isLiked, repeatMode,
                     if (isCompact) null else lyricsLine,
                 )
+                applyArt(views, artBitmap)
                 setClickListeners(context, views)
                 views
             }
@@ -178,39 +183,46 @@ class MusicWidgetProvider : AppWidgetProvider() {
             isLiked: Boolean,
             repeatMode: Int,
             lyricsLine: String?,
+            artBitmap: Bitmap?,
         ): RemoteViews {
-            val fullViews = RemoteViews(context.packageName, R.layout.widget_music_player)
+            val fullViews  = RemoteViews(context.packageName, R.layout.widget_music_player)
             val smallViews = RemoteViews(context.packageName, R.layout.widget_music_player_small)
 
-            populateViews(context, fullViews, title, artist, album, isPlaying, isLiked, repeatMode, lyricsLine)
-            populateViews(context, smallViews, title, null, null, isPlaying, isLiked, repeatMode, null)
+            // All set*() calls must happen on the individual views BEFORE combining them.
+            populateViews(context, fullViews,  title, artist, album, isPlaying, isLiked, repeatMode, lyricsLine)
+            populateViews(context, smallViews, title, null,   null,  isPlaying, isLiked, repeatMode, null)
+            applyArt(fullViews,  artBitmap)
+            applyArt(smallViews, artBitmap)
             setClickListeners(context, fullViews)
             setClickListeners(context, smallViews)
 
-            // Determine heights for each layout so art can be sized as a square.
+            // Dynamic square art: set width = current widget height so art fills the
+            // widget vertically and stays square on every launcher.
             @Suppress("DEPRECATION")
             val sizes = options.getParcelableArrayList<SizeF>(AppWidgetManager.OPTION_APPWIDGET_SIZES)
-            val minH = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 130)
-
-            // Full layout: use the largest reported height (portrait 4×2).
-            val fullH = sizes?.maxByOrNull { it.height }?.height?.toInt()?.coerceAtLeast(80) ?: minH
-
-            // Small layout: use the smallest reported height (portrait 4×1).
-            // Fall back to half the full height if sizes not yet available.
+            val minH  = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 130)
+            val fullH  = sizes?.maxByOrNull { it.height }?.height?.toInt()?.coerceAtLeast(80) ?: minH
             val smallH = sizes?.minByOrNull { it.height }?.height?.toInt()?.coerceAtLeast(40)
                 ?: (minH / 2).coerceAtLeast(56)
 
-            fullViews.setViewLayoutWidth(R.id.widget_album_art, fullH.toFloat(), TypedValue.COMPLEX_UNIT_DIP)
+            fullViews.setViewLayoutWidth(R.id.widget_album_art,  fullH.toFloat(),  TypedValue.COMPLEX_UNIT_DIP)
             smallViews.setViewLayoutWidth(R.id.widget_album_art, smallH.toFloat(), TypedValue.COMPLEX_UNIT_DIP)
 
-            // System picks the largest SizeF key whose dimensions fit the widget.
-            // SizeF(w, h) means "use this layout when widget is at least w×h dp".
+            // Composite created last — no set*() allowed after this point.
             return RemoteViews(
                 mapOf(
-                    SizeF(250f, 110f) to fullViews,   // 4×2: height >= 110dp
-                    SizeF(250f,  56f) to smallViews,  // 4×1: height >= 56dp
+                    SizeF(250f, 110f) to fullViews,
+                    SizeF(250f,  56f) to smallViews,
                 )
             )
+        }
+
+        private fun applyArt(views: RemoteViews, bitmap: Bitmap?) {
+            if (bitmap != null) {
+                views.setImageViewBitmap(R.id.widget_album_art, bitmap)
+            } else {
+                views.setImageViewResource(R.id.widget_album_art, android.R.color.transparent)
+            }
         }
 
         private fun populateViews(
@@ -266,61 +278,39 @@ class MusicWidgetProvider : AppWidgetProvider() {
         }
 
         private fun setClickListeners(context: Context, views: RemoteViews) {
-            views.setOnClickPendingIntent(
-                R.id.widget_btn_play_pause,
-                buildServiceIntent(context, ACTION_WIDGET_PLAY_PAUSE),
-            )
-            views.setOnClickPendingIntent(
-                R.id.widget_btn_next,
-                buildServiceIntent(context, ACTION_WIDGET_NEXT),
-            )
-            views.setOnClickPendingIntent(
-                R.id.widget_btn_prev,
-                buildServiceIntent(context, ACTION_WIDGET_PREV),
-            )
-            views.setOnClickPendingIntent(
-                R.id.widget_btn_like,
-                buildServiceIntent(context, ACTION_WIDGET_LIKE),
-            )
-            views.setOnClickPendingIntent(
-                R.id.widget_btn_repeat,
-                buildServiceIntent(context, ACTION_WIDGET_REPEAT),
-            )
+            views.setOnClickPendingIntent(R.id.widget_btn_play_pause, buildServiceIntent(context, ACTION_WIDGET_PLAY_PAUSE))
+            views.setOnClickPendingIntent(R.id.widget_btn_next,       buildServiceIntent(context, ACTION_WIDGET_NEXT))
+            views.setOnClickPendingIntent(R.id.widget_btn_prev,       buildServiceIntent(context, ACTION_WIDGET_PREV))
+            views.setOnClickPendingIntent(R.id.widget_btn_like,       buildServiceIntent(context, ACTION_WIDGET_LIKE))
+            views.setOnClickPendingIntent(R.id.widget_btn_repeat,     buildServiceIntent(context, ACTION_WIDGET_REPEAT))
             val openApp = PendingIntent.getActivity(
-                context,
-                0,
+                context, 0,
                 Intent(context, MainActivity::class.java).apply {
                     flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
                 },
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
             )
-            views.setOnClickPendingIntent(R.id.widget_song_title, openApp)
-            views.setOnClickPendingIntent(R.id.widget_artist_name, openApp)
-            views.setOnClickPendingIntent(R.id.widget_album_name, openApp)
-            views.setOnClickPendingIntent(R.id.widget_album_art, openApp)
+            views.setOnClickPendingIntent(R.id.widget_song_title,   openApp)
+            views.setOnClickPendingIntent(R.id.widget_artist_name,  openApp)
+            views.setOnClickPendingIntent(R.id.widget_album_name,   openApp)
+            views.setOnClickPendingIntent(R.id.widget_album_art,    openApp)
         }
 
-        private fun buildServiceIntent(context: Context, action: String): PendingIntent {
-            val intent = Intent(action, null, context, MusicService::class.java)
-            return PendingIntent.getService(
-                context,
-                action.hashCode(),
-                intent,
+        private fun buildServiceIntent(context: Context, action: String): PendingIntent =
+            PendingIntent.getService(
+                context, action.hashCode(),
+                Intent(action, null, context, MusicService::class.java),
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
             )
-        }
 
         private fun loadAndRoundBitmap(url: String): Bitmap? = try {
-            val connection = URL(url).openConnection() as HttpURLConnection
-            connection.connectTimeout = 5000
-            connection.readTimeout = 5000
-            connection.connect()
-            val stream: InputStream = connection.inputStream
-            val original = BitmapFactory.decodeStream(stream).also { connection.disconnect() }
-            original?.let { makeSquareRounded(it) }
-        } catch (_: Exception) {
-            null
-        }
+            val conn = URL(url).openConnection() as HttpURLConnection
+            conn.connectTimeout = 5000
+            conn.readTimeout = 5000
+            conn.connect()
+            val stream: InputStream = conn.inputStream
+            BitmapFactory.decodeStream(stream).also { conn.disconnect() }?.let { makeSquareRounded(it) }
+        } catch (_: Exception) { null }
 
         private fun makeSquareRounded(bitmap: Bitmap): Bitmap {
             val size = minOf(bitmap.width, bitmap.height)
@@ -328,7 +318,6 @@ class MusicWidgetProvider : AppWidgetProvider() {
             val y = (bitmap.height - size) / 2
             val square = if (x == 0 && y == 0) bitmap
                          else Bitmap.createBitmap(bitmap, x, y, size, size)
-
             val radius = size * 0.15f
             val output = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
             val canvas = Canvas(output)
