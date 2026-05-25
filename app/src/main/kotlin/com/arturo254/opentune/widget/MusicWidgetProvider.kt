@@ -13,8 +13,13 @@ import android.graphics.Paint
 import android.graphics.PorterDuff
 import android.graphics.PorterDuffXfermode
 import android.graphics.RectF
+import android.os.Build
+import android.os.Bundle
+import android.util.SizeF
+import android.util.TypedValue
 import android.view.View
 import android.widget.RemoteViews
+import androidx.annotation.RequiresApi
 import androidx.media3.common.Player
 import com.arturo254.opentune.MainActivity
 import com.arturo254.opentune.R
@@ -39,6 +44,22 @@ class MusicWidgetProvider : AppWidgetProvider() {
         }
     }
 
+    override fun onAppWidgetOptionsChanged(
+        context: Context,
+        appWidgetManager: AppWidgetManager,
+        appWidgetId: Int,
+        newOptions: Bundle,
+    ) {
+        // Widget resized — ask MusicService to redraw at the new dimensions.
+        try {
+            context.startService(
+                Intent(context, MusicService::class.java).apply {
+                    action = ACTION_UPDATE_WIDGET
+                }
+            )
+        } catch (_: Exception) { }
+    }
+
     companion object {
         const val ACTION_UPDATE_WIDGET = "com.arturo254.opentune.widget.UPDATE"
         const val EXTRA_TITLE = "widget_title"
@@ -58,16 +79,13 @@ class MusicWidgetProvider : AppWidgetProvider() {
         const val ACTION_WIDGET_REPEAT = "com.arturo254.opentune.widget.cmd.REPEAT"
 
         fun updateWidget(context: Context, manager: AppWidgetManager, widgetId: Int) {
-            val views = RemoteViews(context.packageName, R.layout.widget_music_player)
-            views.setTextViewText(R.id.widget_song_title, context.getString(R.string.not_playing))
-            views.setTextViewText(R.id.widget_artist_name, "")
-            views.setTextViewText(R.id.widget_album_name, "")
-            views.setViewVisibility(R.id.widget_artist_name, View.GONE)
-            views.setViewVisibility(R.id.widget_album_name, View.GONE)
-            // Empty state: clear any stale image so the anime placeholder never shows
+            val views = buildViews(
+                context, manager, widgetId,
+                title = null, artist = null, album = null,
+                isPlaying = false, isLiked = false,
+                repeatMode = Player.REPEAT_MODE_OFF, lyricsLine = null,
+            )
             views.setImageViewResource(R.id.widget_album_art, android.R.color.transparent)
-            applyButtonStates(views, isLiked = false, repeatMode = Player.REPEAT_MODE_OFF)
-            setClickListeners(context, views)
             manager.updateAppWidget(widgetId, views)
         }
 
@@ -84,35 +102,11 @@ class MusicWidgetProvider : AppWidgetProvider() {
             repeatMode: Int,
             lyricsLine: String? = null,
         ) {
-            val views = RemoteViews(context.packageName, R.layout.widget_music_player)
-            views.setTextViewText(
-                R.id.widget_song_title,
-                title?.ifBlank { null } ?: context.getString(R.string.not_playing),
+            val views = buildViews(
+                context, manager, widgetId,
+                title, artist, album, isPlaying, isLiked, repeatMode, lyricsLine,
             )
-
-            val hasArtist = !artist.isNullOrBlank()
-            views.setTextViewText(R.id.widget_artist_name, artist.orEmpty())
-            views.setViewVisibility(
-                R.id.widget_artist_name,
-                if (hasArtist) View.VISIBLE else View.GONE,
-            )
-
-            val hasAlbum = !album.isNullOrBlank()
-            views.setTextViewText(R.id.widget_album_name, album.orEmpty())
-            views.setViewVisibility(
-                R.id.widget_album_name,
-                if (hasAlbum) View.VISIBLE else View.GONE,
-            )
-
-            val playPauseIcon = if (isPlaying) R.drawable.ic_pause_white else R.drawable.ic_play_white
-            views.setImageViewResource(R.id.widget_btn_play_pause, playPauseIcon)
-
-            val hasLyrics = !lyricsLine.isNullOrBlank()
-            views.setTextViewText(R.id.widget_lyrics, lyricsLine.orEmpty())
-            views.setViewVisibility(R.id.widget_lyrics, if (hasLyrics) View.VISIBLE else View.GONE)
-
-            applyButtonStates(views, isLiked, repeatMode)
-            setClickListeners(context, views)
+            views.setImageViewResource(R.id.widget_album_art, android.R.color.transparent)
             manager.updateAppWidget(widgetId, views)
 
             if (!artUrl.isNullOrBlank()) {
@@ -127,17 +121,132 @@ class MusicWidgetProvider : AppWidgetProvider() {
                         manager.updateAppWidget(widgetId, views)
                     }
                 }
-            } else {
-                views.setImageViewResource(R.id.widget_album_art, android.R.color.transparent)
-                manager.updateAppWidget(widgetId, views)
             }
         }
 
         /**
-         * Apply icon variant + white colour filter for every control.
-         * Like / repeat convey their state via icon (border ↔ filled,
-         * off / one / all) — no coloured tint.
+         * Builds the RemoteViews for a widget instance.
+         *
+         * On API 31+: returns a responsive RemoteViews that automatically
+         * switches between the full (4×2) and compact (4×1) layouts as the
+         * user resizes the widget. Album art width is dynamically set to equal
+         * the widget's current height, producing a perfect square.
+         *
+         * On older APIs: picks the appropriate layout based on widget height
+         * reported in the options bundle.
          */
+        private fun buildViews(
+            context: Context,
+            manager: AppWidgetManager,
+            widgetId: Int,
+            title: String?,
+            artist: String?,
+            album: String?,
+            isPlaying: Boolean,
+            isLiked: Boolean,
+            repeatMode: Int,
+            lyricsLine: String?,
+        ): RemoteViews {
+            val options = manager.getAppWidgetOptions(widgetId)
+            return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                buildResponsiveViews(context, options, title, artist, album, isPlaying, isLiked, repeatMode, lyricsLine)
+            } else {
+                val heightDp = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 130)
+                val isCompact = heightDp < 100
+                val layoutId = if (isCompact) R.layout.widget_music_player_small else R.layout.widget_music_player
+                val views = RemoteViews(context.packageName, layoutId)
+                populateViews(
+                    context, views, title,
+                    if (isCompact) null else artist,
+                    if (isCompact) null else album,
+                    isPlaying, isLiked, repeatMode,
+                    if (isCompact) null else lyricsLine,
+                )
+                setClickListeners(context, views)
+                views
+            }
+        }
+
+        @RequiresApi(Build.VERSION_CODES.S)
+        private fun buildResponsiveViews(
+            context: Context,
+            options: Bundle,
+            title: String?,
+            artist: String?,
+            album: String?,
+            isPlaying: Boolean,
+            isLiked: Boolean,
+            repeatMode: Int,
+            lyricsLine: String?,
+        ): RemoteViews {
+            val fullViews = RemoteViews(context.packageName, R.layout.widget_music_player)
+            val smallViews = RemoteViews(context.packageName, R.layout.widget_music_player_small)
+
+            populateViews(context, fullViews, title, artist, album, isPlaying, isLiked, repeatMode, lyricsLine)
+            populateViews(context, smallViews, title, null, null, isPlaying, isLiked, repeatMode, null)
+            setClickListeners(context, fullViews)
+            setClickListeners(context, smallViews)
+
+            // Determine heights for each layout so art can be sized as a square.
+            @Suppress("DEPRECATION")
+            val sizes = options.getParcelableArrayList<SizeF>(AppWidgetManager.OPTION_APPWIDGET_SIZES)
+            val minH = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 130)
+
+            // Full layout: use the largest reported height (portrait 4×2).
+            val fullH = sizes?.maxByOrNull { it.height }?.height?.toInt()?.coerceAtLeast(80) ?: minH
+
+            // Small layout: use the smallest reported height (portrait 4×1).
+            // Fall back to half the full height if sizes not yet available.
+            val smallH = sizes?.minByOrNull { it.height }?.height?.toInt()?.coerceAtLeast(40)
+                ?: (minH / 2).coerceAtLeast(56)
+
+            fullViews.setViewLayoutWidth(R.id.widget_album_art, fullH.toFloat(), TypedValue.COMPLEX_UNIT_DIP)
+            smallViews.setViewLayoutWidth(R.id.widget_album_art, smallH.toFloat(), TypedValue.COMPLEX_UNIT_DIP)
+
+            // System picks the largest SizeF key whose dimensions fit the widget.
+            // SizeF(w, h) means "use this layout when widget is at least w×h dp".
+            return RemoteViews(
+                mapOf(
+                    SizeF(250f, 110f) to fullViews,   // 4×2: height >= 110dp
+                    SizeF(250f,  56f) to smallViews,  // 4×1: height >= 56dp
+                )
+            )
+        }
+
+        private fun populateViews(
+            context: Context,
+            views: RemoteViews,
+            title: String?,
+            artist: String?,
+            album: String?,
+            isPlaying: Boolean,
+            isLiked: Boolean,
+            repeatMode: Int,
+            lyricsLine: String?,
+        ) {
+            views.setTextViewText(
+                R.id.widget_song_title,
+                title?.ifBlank { null } ?: context.getString(R.string.not_playing),
+            )
+
+            val hasArtist = !artist.isNullOrBlank()
+            views.setTextViewText(R.id.widget_artist_name, artist.orEmpty())
+            views.setViewVisibility(R.id.widget_artist_name, if (hasArtist) View.VISIBLE else View.GONE)
+
+            val hasAlbum = !album.isNullOrBlank()
+            views.setTextViewText(R.id.widget_album_name, album.orEmpty())
+            views.setViewVisibility(R.id.widget_album_name, if (hasAlbum) View.VISIBLE else View.GONE)
+
+            val hasLyrics = !lyricsLine.isNullOrBlank()
+            views.setTextViewText(R.id.widget_lyrics, lyricsLine.orEmpty())
+            views.setViewVisibility(R.id.widget_lyrics, if (hasLyrics) View.VISIBLE else View.GONE)
+
+            val playPauseIcon = if (isPlaying) R.drawable.ic_pause_white else R.drawable.ic_play_white
+            views.setImageViewResource(R.id.widget_btn_play_pause, playPauseIcon)
+
+            applyButtonStates(views, isLiked, repeatMode)
+        }
+
         private fun applyButtonStates(views: RemoteViews, isLiked: Boolean, repeatMode: Int) {
             views.setInt(R.id.widget_btn_prev, "setColorFilter", Color.WHITE)
             views.setInt(R.id.widget_btn_next, "setColorFilter", Color.WHITE)
@@ -213,10 +322,6 @@ class MusicWidgetProvider : AppWidgetProvider() {
             null
         }
 
-        /**
-         * Center-crops to a square and rounds corners with ~15% radius, matching
-         * the widget's 16dp outer corner radius at the 110dp art size visually.
-         */
         private fun makeSquareRounded(bitmap: Bitmap): Bitmap {
             val size = minOf(bitmap.width, bitmap.height)
             val x = (bitmap.width - size) / 2

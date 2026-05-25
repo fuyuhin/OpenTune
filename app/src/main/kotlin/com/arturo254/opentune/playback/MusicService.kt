@@ -5164,6 +5164,7 @@ class MusicService :
                     else -> REPEAT_MODE_OFF
                 }
             }
+            MusicWidgetProvider.ACTION_UPDATE_WIDGET -> notifyWidget()
         }
         return START_NOT_STICKY
     }
