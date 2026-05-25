@@ -21,6 +21,8 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # full history + tags so the changelog step can diff against the last release
 
     - name: Set up JDK 21
       uses: actions/setup-java@v4
@@ -51,6 +53,38 @@ jobs:
         SHORT_SHA=${GITHUB_SHA::7}
         echo "name=v${VERSION}-${SHORT_SHA}" >> $GITHUB_OUTPUT
 
+    - name: Generate changelog
+      id: changelog
+      run: |
+        PREV_TAG=$(git tag --sort=-creatordate | head -n 1)
+        if [ -z "$PREV_TAG" ]; then
+          RANGE=""
+          RANGE_LABEL="历史全部提交"
+        else
+          RANGE="${PREV_TAG}..HEAD"
+          RANGE_LABEL="自 ${PREV_TAG} 起"
+        fi
+
+        # Exclude merge commits; trailers/co-authored lines are dropped because %s is subject-only
+        COMMITS=$(git log ${RANGE} --pretty=format:"- %s (%h)" --no-merges)
+
+        {
+          echo "body<<__CHANGELOG_EOF__"
+          echo "**OpenTune ARM64 Release · ${{ steps.version.outputs.name }}**"
+          echo ""
+          echo "### 更新内容（${RANGE_LABEL}）"
+          echo ""
+          if [ -z "$COMMITS" ]; then
+            echo "_无新提交_"
+          else
+            echo "$COMMITS"
+          fi
+          echo ""
+          echo "---"
+          echo "_完整对比_: ${PREV_TAG:-初始版本}...${{ steps.version.outputs.name }}"
+          echo "__CHANGELOG_EOF__"
+        } >> "$GITHUB_OUTPUT"
+
     - name: Upload APK to Artifacts
       uses: actions/upload-artifact@v4
       with:
@@ -62,10 +96,7 @@ jobs:
       with:
         tag_name: ${{ steps.version.outputs.name }}
         name: OpenTune ${{ steps.version.outputs.name }}
-        body: |
-          自动构建版本（ARM64 Release）
-
-          包含桌面小组件功能：显示当前播放歌曲，支持播放/暂停/上下曲控制。
+        body: ${{ steps.changelog.outputs.body }}
         files: app/build/outputs/apk/arm64/release/*.apk
         draft: false
         prerelease: false
