@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+    Spec: dark-glass surface, art locked 1:1 left, right column has text top /
+    controls bottom with space-between. Five flat controls, all pure white, no
+    backgrounds: heart · prev · play|pause · next · shuffle.
+-->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -6,9 +11,8 @@
     android:orientation="horizontal">
 
     <!--
-        Art fills the widget height (match_parent). Width is 130dp by default;
-        overridden at runtime via setViewLayoutWidth to match the actual widget
-        height so the ImageView is always a perfect square (API 31+).
+        Art fills widget height; width overridden at runtime via setViewLayoutWidth
+        on API 31+ so it stays a perfect square at any widget height.
     -->
     <ImageView
         android:id="@+id/widget_album_art"
@@ -17,18 +21,19 @@
         android:scaleType="centerCrop"
         android:background="@drawable/widget_art_background" />
 
-    <!-- Right column: text hugs the top; controls pinned at the bottom -->
+    <!-- Right column: text hugs top, controls hug bottom (space-between). -->
     <LinearLayout
         android:layout_width="0dp"
         android:layout_height="match_parent"
         android:layout_weight="1"
+        android:layout_marginStart="12dp"
         android:orientation="vertical"
-        android:paddingStart="12dp"
-        android:paddingEnd="12dp"
-        android:paddingTop="8dp"
-        android:paddingBottom="6dp">
+        android:paddingStart="0dp"
+        android:paddingEnd="14dp"
+        android:paddingTop="10dp"
+        android:paddingBottom="8dp">
 
-        <!-- Text section sized to its content, sitting at the top -->
+        <!-- Text stack -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -40,56 +45,64 @@
                 android:layout_height="wrap_content"
                 android:text="@string/not_playing"
                 android:textColor="#FFFFFFFF"
-                android:textSize="15sp"
+                android:textSize="28sp"
                 android:textStyle="bold"
+                android:fontFamily="sans-serif-medium"
+                android:letterSpacing="-0.015"
+                android:lineSpacingMultiplier="1.14"
                 android:maxLines="2"
-                android:ellipsize="end"
-                android:lineSpacingExtra="-1dp" />
+                android:ellipsize="end" />
 
             <TextView
                 android:id="@+id/widget_artist_name"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textColor="#CCFFFFFF"
-                android:textSize="12sp"
+                android:layout_marginTop="10dp"
+                android:textColor="#D1FFFFFF"
+                android:textSize="20sp"
+                android:fontFamily="sans-serif-medium"
                 android:maxLines="1"
-                android:ellipsize="end"
-                android:layout_marginTop="2dp" />
+                android:ellipsize="end" />
 
             <TextView
                 android:id="@+id/widget_album_name"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textColor="#99FFFFFF"
-                android:textSize="12sp"
+                android:layout_marginTop="4dp"
+                android:textColor="#A8FFFFFF"
+                android:textSize="17sp"
                 android:maxLines="1"
                 android:ellipsize="end" />
 
-            <!-- Current lyrics line (NetEase-style); shown only when enabled -->
             <TextView
                 android:id="@+id/widget_lyrics"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textColor="#AAFFFFFF"
-                android:textSize="11sp"
+                android:layout_marginTop="10dp"
+                android:textColor="#A8FFFFFF"
+                android:textSize="17sp"
                 android:textStyle="italic"
-                android:maxLines="1"
+                android:lineSpacingMultiplier="1.32"
+                android:maxLines="2"
                 android:ellipsize="end"
-                android:layout_marginTop="2dp"
                 android:visibility="gone" />
 
         </LinearLayout>
 
-        <!-- Spring: pushes the controls row to the bottom -->
+        <!-- Spring pushes controls to the bottom -->
         <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1" />
 
-        <!-- Controls: 5 equal slots, all icons transparent background. -->
+        <!--
+            Controls row: 5 flat icons, equal slots. Hit target 44×44 via
+            ImageButton size; transparent padding makes secondary icons
+            appear 32dp while keeping the full 44dp tap area.
+        -->
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="46dp"
+            android:layout_height="48dp"
             android:orientation="horizontal">
 
             <FrameLayout
@@ -98,12 +111,14 @@
                 android:layout_weight="1">
                 <ImageButton
                     android:id="@+id/widget_btn_like"
-                    android:layout_width="28dp"
-                    android:layout_height="28dp"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
                     android:layout_gravity="center"
+                    android:padding="6dp"
                     android:src="@drawable/favorite_border"
                     android:background="@android:color/transparent"
-                    android:scaleType="fitCenter" />
+                    android:scaleType="fitCenter"
+                    android:contentDescription="@string/action_like" />
             </FrameLayout>
 
             <FrameLayout
@@ -112,12 +127,14 @@
                 android:layout_weight="1">
                 <ImageButton
                     android:id="@+id/widget_btn_prev"
-                    android:layout_width="28dp"
-                    android:layout_height="28dp"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
                     android:layout_gravity="center"
+                    android:padding="6dp"
                     android:src="@drawable/ic_widget_prev"
                     android:background="@android:color/transparent"
-                    android:scaleType="fitCenter" />
+                    android:scaleType="fitCenter"
+                    android:contentDescription="@string/previous" />
             </FrameLayout>
 
             <FrameLayout
@@ -126,12 +143,13 @@
                 android:layout_weight="1">
                 <ImageButton
                     android:id="@+id/widget_btn_play_pause"
-                    android:layout_width="36dp"
-                    android:layout_height="36dp"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
                     android:layout_gravity="center"
                     android:src="@drawable/ic_play_white"
                     android:background="@android:color/transparent"
-                    android:scaleType="fitCenter" />
+                    android:scaleType="fitCenter"
+                    android:contentDescription="@string/play_pause" />
             </FrameLayout>
 
             <FrameLayout
@@ -140,12 +158,14 @@
                 android:layout_weight="1">
                 <ImageButton
                     android:id="@+id/widget_btn_next"
-                    android:layout_width="28dp"
-                    android:layout_height="28dp"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
                     android:layout_gravity="center"
+                    android:padding="6dp"
                     android:src="@drawable/ic_widget_next"
                     android:background="@android:color/transparent"
-                    android:scaleType="fitCenter" />
+                    android:scaleType="fitCenter"
+                    android:contentDescription="@string/next" />
             </FrameLayout>
 
             <FrameLayout
@@ -153,13 +173,15 @@
                 android:layout_height="match_parent"
                 android:layout_weight="1">
                 <ImageButton
-                    android:id="@+id/widget_btn_repeat"
-                    android:layout_width="28dp"
-                    android:layout_height="28dp"
+                    android:id="@+id/widget_btn_shuffle"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
                     android:layout_gravity="center"
-                    android:src="@drawable/repeat"
+                    android:padding="6dp"
+                    android:src="@drawable/shuffle"
                     android:background="@android:color/transparent"
-                    android:scaleType="fitCenter" />
+                    android:scaleType="fitCenter"
+                    android:contentDescription="@string/shuffle" />
             </FrameLayout>
 
         </LinearLayout>

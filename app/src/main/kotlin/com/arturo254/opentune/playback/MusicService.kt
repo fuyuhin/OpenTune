@@ -1504,11 +1504,11 @@ class MusicService :
         val isPlaying = player.isPlaying || (player.playWhenReady && player.playbackState == Player.STATE_BUFFERING)
         val artUrl = metadata?.thumbnailUrl
         val isLiked = currentSong.value?.song?.liked == true
-        val repeatMode = player.repeatMode
+        val isShuffleOn = player.shuffleModeEnabled
         for (id in ids) {
             MusicWidgetProvider.updateWidgetContent(
                 this, manager, id,
-                title, artist, album, isPlaying, artUrl, isLiked, repeatMode,
+                title, artist, album, isPlaying, artUrl, isLiked, isShuffleOn,
                 currentWidgetLyricsLine,
             )
         }
@@ -5156,13 +5156,9 @@ class MusicService :
                     { notifyWidget() }, 300L
                 )
             }
-            MusicWidgetProvider.ACTION_WIDGET_REPEAT -> {
-                // Cycle: OFF → ONE → ALL → OFF
-                player.repeatMode = when (player.repeatMode) {
-                    REPEAT_MODE_OFF -> REPEAT_MODE_ONE
-                    REPEAT_MODE_ONE -> REPEAT_MODE_ALL
-                    else -> REPEAT_MODE_OFF
-                }
+            MusicWidgetProvider.ACTION_WIDGET_SHUFFLE -> {
+                player.shuffleModeEnabled = !player.shuffleModeEnabled
+                notifyWidget()
             }
             MusicWidgetProvider.ACTION_UPDATE_WIDGET -> notifyWidget()
         }
