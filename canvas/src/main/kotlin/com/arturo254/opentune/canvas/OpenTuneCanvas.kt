@@ -20,11 +20,10 @@ import io.ktor.client.request.get
 import io.ktor.client.request.parameter
 import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.kotlinx.json.json
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import java.util.Locale
 import java.util.concurrent.ConcurrentHashMap
+import com.arturo254.opentune.canvas.models.CanvasArtwork
 
 object OpenTuneCanvas {
     private const val BASE_URL = "https://artwork-ArchiveTune.koiiverse.cloud/"
@@ -166,18 +165,4 @@ object OpenTuneCanvas {
                 .joinToString("|")
         return "$prefix|$normalized"
     }
-}
-
-@Serializable
-data class CanvasArtwork(
-    val name: String? = null,
-    val artist: String? = null,
-    @SerialName("albumId")
-    val albumId: String? = null,
-    val static: String? = null,
-    val animated: String? = null,
-    val videoUrl: String? = null,
-) {
-    val preferredAnimationUrl: String?
-        get() = animated ?: videoUrl
 }

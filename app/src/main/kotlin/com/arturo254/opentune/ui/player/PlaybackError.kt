@@ -67,6 +67,10 @@ fun PlaybackError(
         when (errorInfo.kind) {
             PlaybackErrorKind.LoginRefreshRequired -> stringResource(R.string.playback_login_refresh_required)
             PlaybackErrorKind.ConfirmationRequired -> stringResource(R.string.playback_confirmation_required)
+            PlaybackErrorKind.NoInternet -> fallbackNoInternet
+            PlaybackErrorKind.Timeout -> fallbackTimeout
+            PlaybackErrorKind.NoStream -> fallbackNoStream
+            PlaybackErrorKind.MalformedStream -> fallbackMalformedStream
             else -> fallbackUnknown
         }
     val reason =
@@ -163,7 +167,7 @@ fun PlaybackError(
             errorInfo.loginRecoveryUrl?.let { targetUrl ->
                 Button(
                     onClick = {
-                        val deepLink = Uri.parse("archivetune://login?url=${Uri.encode(targetUrl)}")
+                        val deepLink = Uri.parse("opentune://login?url=${Uri.encode(targetUrl)}")
                         val loginIntent =
                             Intent(Intent.ACTION_VIEW, deepLink, context, MainActivity::class.java).apply {
                                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)

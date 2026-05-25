@@ -5156,7 +5156,7 @@ class MusicService :
                     { notifyWidget() }, 300L
                 )
             }
-            MusicWidgetProvider.ACTION_WIDGET_SHUFFLE -> {
+            MusicWidgetProvider.ACTION_WIDGET_SHUFFLE -> whenQueueReady {
                 player.shuffleModeEnabled = !player.shuffleModeEnabled
                 notifyWidget()
             }

@@ -570,7 +570,7 @@ fun Thumbnail(
                                             requireVertical = false,
                                         )
                                     }
-                                canvasArtwork = fetched as CanvasArtwork?
+                                canvasArtwork = fetched
                                 canvasFetchedAtMs = now
                                 if (fetched != null) {
                                     CanvasArtworkPlaybackCache.put(item.mediaId, fetched)

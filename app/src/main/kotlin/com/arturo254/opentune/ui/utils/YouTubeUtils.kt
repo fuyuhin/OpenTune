@@ -35,9 +35,13 @@ fun String.resize(
             return "${split("=w")[0]}=w$w-h$h-p-l90-rj"
         }
 
-        // Handle =sNNN (square) style used by yt3.ggpht.com
-        if (this matches "https://yt3\\.ggpht\\.com/.*=s(\\d+)".toRegex()) {
-            return "${split("=s")[0]}=s${maxOf(w, h)}"
+        // Handle =sNNN (square) style used by yt3.ggpht.com and lh3.googleusercontent.com.
+        // Strip any trailing modifiers appended to the size token (e.g. "-c-rw") to avoid
+        // double-suffixing on subsequent resize() calls.
+        Regex("=s\\d+(?:-[\\w-]+)?").find(this)?.let { match ->
+            val before = substring(0, match.range.first)
+            val after = substring(match.range.last + 1)
+            return "${before}=s${maxOf(w, h)}${after}"
         }
 
         return this

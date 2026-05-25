@@ -25,9 +25,10 @@ import com.arturo254.opentune.R
 import com.arturo254.opentune.playback.MusicService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.io.InputStream
 import java.net.HttpURLConnection
 import java.net.URL
 
@@ -49,13 +50,24 @@ class MusicWidgetProvider : AppWidgetProvider() {
         appWidgetId: Int,
         newOptions: Bundle,
     ) {
+        // Always redraw with new dimensions in the no-track state first so the album
+        // art width tracks the new widget height. If the service is alive (music
+        // playing), nudging it will overwrite this with the real playback state; if it
+        // isn't, IllegalStateException on background-start is expected on API 26+ and
+        // the no-track redraw is the correct final state anyway.
+        updateWidget(context, appWidgetManager, appWidgetId)
         try {
             context.startService(
                 Intent(context, MusicService::class.java).apply {
                     action = ACTION_UPDATE_WIDGET
                 }
             )
-        } catch (_: Exception) { }
+        } catch (_: IllegalStateException) {
+            // Background-start restriction on API 26+: service isn't running, no
+            // playback state to push. The no-track redraw above is the final state.
+        } catch (_: SecurityException) {
+            // Some OEMs reject startService() with custom permission errors.
+        }
     }
 
     companion object {
@@ -80,6 +92,12 @@ class MusicWidgetProvider : AppWidgetProvider() {
         // Buttons dimmed when there is no track loaded (per spec).
         private const val NO_TRACK_BUTTON_ALPHA = 0.5f
         private const val FULL_BUTTON_ALPHA     = 1.0f
+
+        // Single supervisor scope for all art fetches, keyed by widgetId. A new fetch
+        // for the same widget cancels the previous in-flight one to avoid stale art
+        // arriving after a track change and overwriting the current artwork.
+        private val artScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+        private val artJobs = mutableMapOf<Int, Job>()
 
         fun updateWidget(context: Context, manager: AppWidgetManager, widgetId: Int) {
             val views = buildViews(
@@ -115,8 +133,15 @@ class MusicWidgetProvider : AppWidgetProvider() {
             )
             manager.updateAppWidget(widgetId, views)
 
+            // Cancel any previous in-flight art fetch for this widget before starting a
+            // new one — otherwise a slow request from the previous track can land last
+            // and overwrite the current artwork.
+            synchronized(artJobs) {
+                artJobs.remove(widgetId)?.cancel()
+            }
+
             if (!artUrl.isNullOrBlank()) {
-                CoroutineScope(Dispatchers.IO).launch {
+                val job = artScope.launch {
                     val bitmap = loadAndRoundBitmap(artUrl)
                     withContext(Dispatchers.Main) {
                         // Rebuild entirely; bitmap baked into each individual RemoteViews
@@ -129,6 +154,7 @@ class MusicWidgetProvider : AppWidgetProvider() {
                         manager.updateAppWidget(widgetId, viewsWithArt)
                     }
                 }
+                synchronized(artJobs) { artJobs[widgetId] = job }
             }
         }
 
@@ -198,12 +224,15 @@ class MusicWidgetProvider : AppWidgetProvider() {
             setClickListeners(context, smallViews)
 
             // Dynamic square art: width = current widget height (per orientation).
+            // Small layout is laid out at the 56dp breakpoint per the sizeMap below, so
+            // when OPTION_APPWIDGET_SIZES is missing we fall back to that bound directly
+            // — never half of minH, which on a 130dp widget produced 65dp art inside a
+            // 56dp row and distorted the layout.
             @Suppress("DEPRECATION")
             val sizes = options.getParcelableArrayList<SizeF>(AppWidgetManager.OPTION_APPWIDGET_SIZES)
             val minH  = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 130)
             val fullH  = sizes?.maxByOrNull { it.height }?.height?.toInt()?.coerceAtLeast(80) ?: minH
-            val smallH = sizes?.minByOrNull { it.height }?.height?.toInt()?.coerceAtLeast(40)
-                ?: (minH / 2).coerceAtLeast(56)
+            val smallH = sizes?.minByOrNull { it.height }?.height?.toInt()?.coerceIn(40, 110) ?: 56
 
             fullViews.setViewLayoutWidth(R.id.widget_album_art,  fullH.toFloat(),  TypedValue.COMPLEX_UNIT_DIP)
             smallViews.setViewLayoutWidth(R.id.widget_album_art, smallH.toFloat(), TypedValue.COMPLEX_UNIT_DIP)
@@ -318,14 +347,22 @@ class MusicWidgetProvider : AppWidgetProvider() {
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
             )
 
-        private fun loadAndRoundBitmap(url: String): Bitmap? = try {
-            val conn = URL(url).openConnection() as HttpURLConnection
-            conn.connectTimeout = 5000
-            conn.readTimeout = 5000
-            conn.connect()
-            val stream: InputStream = conn.inputStream
-            BitmapFactory.decodeStream(stream).also { conn.disconnect() }?.let { makeSquareRounded(it) }
-        } catch (_: Exception) { null }
+        private fun loadAndRoundBitmap(url: String): Bitmap? {
+            var conn: HttpURLConnection? = null
+            return try {
+                conn = (URL(url).openConnection() as HttpURLConnection).apply {
+                    connectTimeout = 5000
+                    readTimeout = 5000
+                    connect()
+                }
+                val original = conn.inputStream.use { BitmapFactory.decodeStream(it) }
+                original?.let { makeSquareRounded(it) }
+            } catch (_: Exception) {
+                null
+            } finally {
+                conn?.disconnect()
+            }
+        }
 
         /**
          * Center-crops to a square and rounds corners at roughly 10% of the bitmap pixel
