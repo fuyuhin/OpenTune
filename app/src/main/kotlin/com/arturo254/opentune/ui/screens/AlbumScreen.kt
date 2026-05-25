@@ -223,7 +223,7 @@ private fun QualitySelectionDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
-                text = "Selecciona la calidad",
+                text = stringResource(R.string.select_image_quality),
                 style = MaterialTheme.typography.headlineSmall
             )
         },
@@ -254,7 +254,7 @@ private fun QualitySelectionDialog(
                     )
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "Baja (512x512)",
+                            text = stringResource(R.string.quality_low),
                             style = MaterialTheme.typography.bodyMedium,
                             fontWeight = FontWeight.Medium
                         )
@@ -286,7 +286,7 @@ private fun QualitySelectionDialog(
                     )
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "Media (768x768)",
+                            text = stringResource(R.string.quality_medium),
                             style = MaterialTheme.typography.bodyMedium,
                             fontWeight = FontWeight.Medium
                         )
@@ -318,7 +318,7 @@ private fun QualitySelectionDialog(
                     )
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "Alta (1024x1024)",
+                            text = stringResource(R.string.quality_high),
                             style = MaterialTheme.typography.bodyMedium,
                             fontWeight = FontWeight.Medium
                         )
@@ -338,12 +338,12 @@ private fun QualitySelectionDialog(
                     onDismiss()
                 }
             ) {
-                Text("Descargar")
+                Text(stringResource(R.string.action_download))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancelar")
+                Text(stringResource(R.string.action_cancel))
             }
         }
     )

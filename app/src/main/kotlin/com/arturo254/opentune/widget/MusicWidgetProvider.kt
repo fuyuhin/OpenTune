@@ -99,6 +99,11 @@ class MusicWidgetProvider : AppWidgetProvider() {
         private val artScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
         private val artJobs = mutableMapOf<Int, Job>()
 
+        // Cache the last loaded bitmap per widgetId so that lyric-only updates (same
+        // artUrl, same track) can skip the async fetch and render immediately without
+        // the two-phase transparent→art flicker.
+        private val artCache = mutableMapOf<Int, Pair<String, Bitmap>>()
+
         fun updateWidget(context: Context, manager: AppWidgetManager, widgetId: Int) {
             val views = buildViews(
                 context, manager, widgetId,
@@ -123,29 +128,29 @@ class MusicWidgetProvider : AppWidgetProvider() {
             isShuffleOn: Boolean,
             lyricsLine: String? = null,
         ) {
-            // First push with transparent art placeholder.
-            // NEVER call set*() on the returned RemoteViews — on API 31+ it is a composite
-            // (sizeMap) view and Android forbids modifying it after construction.
+            // If the art URL is the same as last time, use the cached bitmap immediately.
+            // This means lyric-only updates (same track, different lyric line) render in a
+            // single pass — no transparent placeholder → no flicker.
+            val cached = synchronized(artCache) { artCache[widgetId] }
+            val cachedBitmap = if (!artUrl.isNullOrBlank() && cached?.first == artUrl) cached.second else null
+
             val views = buildViews(
                 context, manager, widgetId,
                 title, artist, album, isPlaying, isLiked, isShuffleOn, lyricsLine,
-                artBitmap = null,
+                artBitmap = cachedBitmap,
             )
             manager.updateAppWidget(widgetId, views)
 
-            // Cancel any previous in-flight art fetch for this widget before starting a
-            // new one — otherwise a slow request from the previous track can land last
-            // and overwrite the current artwork.
-            synchronized(artJobs) {
-                artJobs.remove(widgetId)?.cancel()
-            }
+            // URL changed or no cache — cancel old fetch and start a new one.
+            if (!artUrl.isNullOrBlank() && cachedBitmap == null) {
+                synchronized(artJobs) { artJobs.remove(widgetId)?.cancel() }
 
-            if (!artUrl.isNullOrBlank()) {
                 val job = artScope.launch {
                     val bitmap = loadAndRoundBitmap(artUrl)
                     withContext(Dispatchers.Main) {
-                        // Rebuild entirely; bitmap baked into each individual RemoteViews
-                        // *before* the composite is assembled.
+                        if (bitmap != null) {
+                            synchronized(artCache) { artCache[widgetId] = artUrl to bitmap }
+                        }
                         val viewsWithArt = buildViews(
                             context, manager, widgetId,
                             title, artist, album, isPlaying, isLiked, isShuffleOn, lyricsLine,

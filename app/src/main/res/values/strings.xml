@@ -879,4 +879,11 @@ OpenTune will only extract your token, and everything else is stored locally.</s
     <string name="playback_requires_youtube_music_login_refresh">Refresh your YouTube Music login, then return to OpenTune.</string>
     <string name="error_malformed_stream">Source error</string>
 
+    <!-- Album cover quality selection dialog -->
+    <string name="select_image_quality">Select Image Quality</string>
+    <string name="quality_low">Low (512×512)</string>
+    <string name="quality_medium">Medium (768×768)</string>
+    <string name="quality_high">High (1024×1024)</string>
+    <string name="action_cancel">Cancel</string>
+
 </resources>

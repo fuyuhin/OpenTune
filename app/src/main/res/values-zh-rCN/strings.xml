@@ -810,4 +810,11 @@
     <string name="wakelock">播放时保持 CPU 唤醒</string>
     <string name="wakelock_desc">通过持有 CPU 唤醒锁防止系统中断音乐播放</string>
     <string name="playback_requires_youtube_music_confirmation">请在 YouTube Music 中确认播放，然后返回 OpenTune。</string>
+
+    <!-- 专辑封面图片质量选择 -->
+    <string name="select_image_quality">选择图片质量</string>
+    <string name="quality_low">低画质 (512×512)</string>
+    <string name="quality_medium">中画质 (768×768)</string>
+    <string name="quality_high">高画质 (1024×1024)</string>
+    <string name="action_cancel">取消</string>
 </resources>
