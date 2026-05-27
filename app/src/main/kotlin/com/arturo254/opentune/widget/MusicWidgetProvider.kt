@@ -44,6 +44,18 @@ class MusicWidgetProvider : AppWidgetProvider() {
         }
     }
 
+    override fun onDeleted(context: Context, appWidgetIds: IntArray) {
+        for (id in appWidgetIds) {
+            synchronized(artJobs)  { artJobs.remove(id)?.cancel() }
+            synchronized(artCache) { artCache.remove(id) }
+        }
+    }
+
+    override fun onDisabled(context: Context) {
+        synchronized(artJobs)  { artJobs.values.forEach { it.cancel() }; artJobs.clear() }
+        synchronized(artCache) { artCache.clear() }
+    }
+
     override fun onAppWidgetOptionsChanged(
         context: Context,
         appWidgetManager: AppWidgetManager,

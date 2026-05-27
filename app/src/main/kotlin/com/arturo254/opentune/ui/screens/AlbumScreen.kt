@@ -683,7 +683,7 @@ fun AlbumScreen(
                                     } else {
                                         Icon(
                                             painter = painterResource(R.drawable.download),
-                                            contentDescription = "Descargar carátula",
+                                            contentDescription = stringResource(R.string.action_download),
                                             tint = Color.White.copy(alpha = 0.8f), // Ícono semi-transparente
                                             modifier = Modifier.size(24.dp) // Ícono más pequeño
                                         )
@@ -1340,16 +1340,6 @@ fun AlbumScreen(
                                 quality = quality
                             )
 
-                            val qualityLabel = when (quality) {
-                                512 -> "Baja (512x512)"
-                                768 -> "Media (768x768)"
-                                1024 -> "Alta (1024x1024)"
-                                else -> "Custom"
-                            }
-
-                            if (success) {
-                                // Aquí puedes agregar un SnackBar si lo deseas
-                            }
                         } finally {
                             downloadingCover = false
                         }
