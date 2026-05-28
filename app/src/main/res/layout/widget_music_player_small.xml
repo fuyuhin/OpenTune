@@ -1,86 +1,85 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+    4×1 compact: square art (left) + right column with title on top and the
+    transport bar pinned to the bottom (space-between). No artist/album/lyric
+    rows — height doesn't allow them.
+-->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/widget_background"
-    android:orientation="horizontal">
+    android:orientation="horizontal"
+    android:padding="8dp">
 
-    <!-- Art fills widget height; width set at runtime to match height (API 31+). -->
+    <!-- Square art; width set at runtime to match height (API 31+). -->
     <ImageView
         android:id="@+id/widget_album_art"
-        android:layout_width="60dp"
+        android:layout_width="62dp"
         android:layout_height="match_parent"
-        android:layout_marginStart="6dp"
-        android:layout_marginTop="6dp"
-        android:layout_marginBottom="6dp"
         android:scaleType="centerCrop"
         android:background="@drawable/widget_art_background" />
 
+    <!-- Right column; 10dp column-gap from the art. -->
     <LinearLayout
         android:layout_width="0dp"
         android:layout_height="match_parent"
         android:layout_weight="1"
         android:layout_marginStart="10dp"
-        android:orientation="vertical"
-        android:paddingEnd="10dp"
-        android:paddingTop="6dp"
-        android:paddingBottom="4dp">
+        android:orientation="vertical">
 
-        <LinearLayout
+        <TextView
+            android:id="@+id/widget_song_title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:text="@string/not_playing"
+            android:textColor="#FFFFFFFF"
+            android:textSize="14sp"
+            android:fontFamily="sans-serif-medium"
+            android:maxLines="1"
+            android:ellipsize="end" />
 
-            <TextView
-                android:id="@+id/widget_song_title"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/not_playing"
-                android:textColor="#FFFFFFFF"
-                android:textSize="14sp"
-                android:fontFamily="sans-serif-medium"
-                android:maxLines="1"
-                android:ellipsize="end" />
+        <!-- Hidden text views kept so the provider can address them generically. -->
+        <TextView
+            android:id="@+id/widget_artist_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#D1FFFFFF"
+            android:textSize="11sp"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:visibility="gone" />
 
-            <TextView
-                android:id="@+id/widget_artist_name"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:textColor="#D1FFFFFF"
-                android:textSize="11sp"
-                android:maxLines="1"
-                android:ellipsize="end"
-                android:visibility="gone" />
+        <TextView
+            android:id="@+id/widget_album_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#A8FFFFFF"
+            android:textSize="11sp"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:visibility="gone" />
 
-            <TextView
-                android:id="@+id/widget_album_name"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:textColor="#A8FFFFFF"
-                android:textSize="11sp"
-                android:maxLines="1"
-                android:ellipsize="end"
-                android:visibility="gone" />
+        <TextView
+            android:id="@+id/widget_lyrics"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#A8FFFFFF"
+            android:textSize="10sp"
+            android:textStyle="italic"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:visibility="gone" />
 
-            <TextView
-                android:id="@+id/widget_lyrics"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:textColor="#A8FFFFFF"
-                android:textSize="10sp"
-                android:textStyle="italic"
-                android:maxLines="1"
-                android:ellipsize="end"
-                android:visibility="gone" />
-
-        </LinearLayout>
-
+        <!-- Spring pushes the transport bar to the bottom. -->
         <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1" />
 
-        <!-- Compact controls: 5 flat icons, smaller -->
+        <!--
+            Compact transport bar: 36dp tall, five equal slots. 32dp hit target;
+            transparent padding shrinks the glyph to 24dp (secondary) / 32dp (play).
+        -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="36dp"
@@ -95,9 +94,9 @@
                     android:layout_width="32dp"
                     android:layout_height="32dp"
                     android:layout_gravity="center"
-                    android:padding="5dp"
+                    android:padding="4dp"
                     android:src="@drawable/favorite_border"
-                    android:background="@android:color/transparent"
+                    android:background="?android:attr/selectableItemBackgroundBorderless"
                     android:scaleType="fitCenter"
                     android:contentDescription="@string/action_like" />
             </FrameLayout>
@@ -111,9 +110,9 @@
                     android:layout_width="32dp"
                     android:layout_height="32dp"
                     android:layout_gravity="center"
-                    android:padding="5dp"
+                    android:padding="4dp"
                     android:src="@drawable/ic_widget_prev"
-                    android:background="@android:color/transparent"
+                    android:background="?android:attr/selectableItemBackgroundBorderless"
                     android:scaleType="fitCenter"
                     android:contentDescription="@string/previous" />
             </FrameLayout>
@@ -128,9 +127,9 @@
                     android:layout_height="32dp"
                     android:layout_gravity="center"
                     android:src="@drawable/ic_play_white"
-                    android:background="@android:color/transparent"
+                    android:background="?android:attr/selectableItemBackgroundBorderless"
                     android:scaleType="fitCenter"
-                    android:contentDescription="@string/play_pause" />
+                    android:contentDescription="@string/play" />
             </FrameLayout>
 
             <FrameLayout
@@ -142,9 +141,9 @@
                     android:layout_width="32dp"
                     android:layout_height="32dp"
                     android:layout_gravity="center"
-                    android:padding="5dp"
+                    android:padding="4dp"
                     android:src="@drawable/ic_widget_next"
-                    android:background="@android:color/transparent"
+                    android:background="?android:attr/selectableItemBackgroundBorderless"
                     android:scaleType="fitCenter"
                     android:contentDescription="@string/next" />
             </FrameLayout>
@@ -158,11 +157,11 @@
                     android:layout_width="32dp"
                     android:layout_height="32dp"
                     android:layout_gravity="center"
-                    android:padding="5dp"
+                    android:padding="4dp"
                     android:src="@drawable/repeat"
-                    android:background="@android:color/transparent"
+                    android:background="?android:attr/selectableItemBackgroundBorderless"
                     android:scaleType="fitCenter"
-                    android:contentDescription="@string/repeat" />
+                    android:contentDescription="@string/repeat_mode_off" />
             </FrameLayout>
 
         </LinearLayout>

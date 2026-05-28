@@ -104,6 +104,8 @@ class MusicWidgetProvider : AppWidgetProvider() {
         // Buttons dimmed when there is no track loaded (per spec).
         private const val NO_TRACK_BUTTON_ALPHA = 0.5f
         private const val FULL_BUTTON_ALPHA     = 1.0f
+        // Repeat glyph at 40% when repeat is off (per spec tri-state).
+        private const val REPEAT_OFF_ALPHA      = 0.4f
 
         // Single supervisor scope for all art fetches, keyed by widgetId. A new fetch
         // for the same widget cancels the previous in-flight one to avoid stale art
@@ -252,11 +254,14 @@ class MusicWidgetProvider : AppWidgetProvider() {
             val fullH  = sizes?.maxByOrNull { it.height }?.height?.toInt()?.coerceAtLeast(80) ?: minH
             val smallH = sizes?.minByOrNull { it.height }?.height?.toInt()?.coerceIn(40, 110) ?: 56
 
-            // The art ImageView has 6dp top + 6dp bottom margin in both layouts, so its
-            // actual display height is (rowHeight - 12). Set width to match so it stays square.
-            val artVerticalMarginDp = 12
-            fullViews.setViewLayoutWidth(R.id.widget_album_art,  (fullH  - artVerticalMarginDp).coerceAtLeast(40).toFloat(), TypedValue.COMPLEX_UNIT_DIP)
-            smallViews.setViewLayoutWidth(R.id.widget_album_art, (smallH - artVerticalMarginDp).coerceAtLeast(20).toFloat(), TypedValue.COMPLEX_UNIT_DIP)
+            // Art is square: width = the height available to row 1. In the 4×2 the art
+            // shares a weighted row above the 44dp transport bar, so its height is
+            // (widgetH − 10dp×2 padding − 44dp bar − 6dp row-gap) = widgetH − 70. In the
+            // 4×1 the art fills the row inside the 8dp padding, so height = widgetH − 16.
+            val fullArtSide  = (fullH  - 70).coerceAtLeast(40)
+            val smallArtSide = (smallH - 16).coerceAtLeast(20)
+            fullViews.setViewLayoutWidth(R.id.widget_album_art,  fullArtSide.toFloat(),  TypedValue.COMPLEX_UNIT_DIP)
+            smallViews.setViewLayoutWidth(R.id.widget_album_art, smallArtSide.toFloat(), TypedValue.COMPLEX_UNIT_DIP)
 
             return RemoteViews(
                 mapOf(
@@ -310,30 +315,54 @@ class MusicWidgetProvider : AppWidgetProvider() {
             val playPauseIcon = if (isPlaying) R.drawable.ic_pause_white else R.drawable.ic_play_white
             views.setImageViewResource(R.id.widget_btn_play_pause, playPauseIcon)
 
-            applyButtonStates(views, repeatMode, hasTrack, isLiked)
+            applyButtonStates(context, views, repeatMode, isPlaying, hasTrack, isLiked)
         }
 
-        private fun applyButtonStates(views: RemoteViews, repeatMode: Int, hasTrack: Boolean, isLiked: Boolean?) {
+        private fun applyButtonStates(
+            context: Context,
+            views: RemoteViews,
+            repeatMode: Int,
+            isPlaying: Boolean,
+            hasTrack: Boolean,
+            isLiked: Boolean?,
+        ) {
             // Pure-white tint on every control, no accent colours.
             views.setInt(R.id.widget_btn_prev,       "setColorFilter", Color.WHITE)
             views.setInt(R.id.widget_btn_next,       "setColorFilter", Color.WHITE)
             views.setInt(R.id.widget_btn_play_pause, "setColorFilter", Color.WHITE)
             views.setInt(R.id.widget_btn_repeat,     "setColorFilter", Color.WHITE)
 
-            // Repeat: cycle through off / all / one using dedicated icon variants.
-            val repeatIcon = when (repeatMode) {
-                androidx.media3.common.Player.REPEAT_MODE_ONE -> R.drawable.repeat_one_on
-                androidx.media3.common.Player.REPEAT_MODE_ALL -> R.drawable.repeat_on
-                else -> R.drawable.repeat
-            }
-            views.setImageViewResource(R.id.widget_btn_repeat, repeatIcon)
-
-            // No-track state: dim all controls to 50% per spec.
+            // No-track state: dim controls to 50% per spec.
             val alpha = if (hasTrack) FULL_BUTTON_ALPHA else NO_TRACK_BUTTON_ALPHA
             views.setFloat(R.id.widget_btn_prev,       "setAlpha", alpha)
             views.setFloat(R.id.widget_btn_play_pause, "setAlpha", alpha)
             views.setFloat(R.id.widget_btn_next,       "setAlpha", alpha)
-            views.setFloat(R.id.widget_btn_repeat,     "setAlpha", alpha)
+
+            // Play/pause label tracks the action the button performs.
+            views.setContentDescription(
+                R.id.widget_btn_play_pause,
+                context.getString(if (isPlaying) R.string.pause else R.string.play),
+            )
+
+            // Repeat tri-state: list (all) → one → off → list. The "one" icon carries
+            // its own "1" badge; "off" dims the glyph to 40%. Label follows the mode.
+            val repeatIcon: Int
+            val repeatDesc: Int
+            when (repeatMode) {
+                androidx.media3.common.Player.REPEAT_MODE_ALL -> { repeatIcon = R.drawable.repeat_on;     repeatDesc = R.string.repeat_mode_all }
+                androidx.media3.common.Player.REPEAT_MODE_ONE -> { repeatIcon = R.drawable.repeat_one_on; repeatDesc = R.string.repeat_mode_one }
+                else                                          -> { repeatIcon = R.drawable.repeat;        repeatDesc = R.string.repeat_mode_off }
+            }
+            views.setImageViewResource(R.id.widget_btn_repeat, repeatIcon)
+            views.setContentDescription(R.id.widget_btn_repeat, context.getString(repeatDesc))
+            views.setFloat(
+                R.id.widget_btn_repeat, "setAlpha",
+                when {
+                    !hasTrack -> NO_TRACK_BUTTON_ALPHA
+                    repeatMode == androidx.media3.common.Player.REPEAT_MODE_OFF -> REPEAT_OFF_ALPHA
+                    else -> FULL_BUTTON_ALPHA
+                },
+            )
 
             // Like button: present in both layouts; isLiked == null means the caller
             // opted out of touching like state for this pass.
@@ -344,6 +373,10 @@ class MusicWidgetProvider : AppWidgetProvider() {
                     if (isLiked) R.drawable.favorite else R.drawable.favorite_border,
                 )
                 views.setFloat(R.id.widget_btn_like, "setAlpha", alpha)
+                views.setContentDescription(
+                    R.id.widget_btn_like,
+                    context.getString(if (isLiked) R.string.liked else R.string.action_like),
+                )
             }
         }
 
