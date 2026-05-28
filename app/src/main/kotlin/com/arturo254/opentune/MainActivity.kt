@@ -991,8 +991,21 @@ class MainActivity : ComponentActivity() {
                                     mediaItem: MediaItem?,
                                     reason: Int,
                                 ) {
-                                    if (reason == Player.MEDIA_ITEM_TRANSITION_REASON_PLAYLIST_CHANGED &&
-                                        mediaItem != null &&
+                                    if (mediaItem != null &&
+                                        playerBottomSheetState.isDismissed &&
+                                        !isYearInMusicScreen
+                                    ) {
+                                        playerBottomSheetState.collapseSoft()
+                                    }
+                                }
+
+                                // Reactive safety net: whenever a current item exists (e.g. the
+                                // persisted queue restored on cold start) and the mini player is
+                                // hidden, bring it back. Guarded on isDismissed so it never fights
+                                // an expanded player or a user dismiss (which clears playback, so
+                                // currentMediaItem becomes null and this is a no-op).
+                                override fun onEvents(player: Player, events: Player.Events) {
+                                    if (player.currentMediaItem != null &&
                                         playerBottomSheetState.isDismissed &&
                                         !isYearInMusicScreen
                                     ) {

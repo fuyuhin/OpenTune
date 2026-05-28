@@ -188,17 +188,20 @@ class MusicWidgetProvider : AppWidgetProvider() {
             lyricsLine: String? = null,
         ) {
             // Persist state so updateWidget() can restore it when the service is dead.
-            // Use commit() on the IO scope (synchronous disk write) rather than apply()
-            // so the write completes before any SIGKILL can cut it off.
-            artScope.launch {
-                context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit()
-                    .putString(PREF_TITLE,   title)
-                    .putString(PREF_ARTIST,  artist)
-                    .putString(PREF_ALBUM,   album)
-                    .putString(PREF_ART_URL, artUrl)
-                    .putInt(PREF_REPEAT,     repeatMode)
-                    .putBoolean(PREF_LIKED,  isLiked)
-                    .commit()
+            // Only when there is a real track — never overwrite the saved last song with
+            // a blank frame (e.g. a transient no-track update). Use commit() on the IO
+            // scope (synchronous disk write) so it completes before any SIGKILL.
+            if (!title.isNullOrBlank()) {
+                artScope.launch {
+                    context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit()
+                        .putString(PREF_TITLE,   title)
+                        .putString(PREF_ARTIST,  artist)
+                        .putString(PREF_ALBUM,   album)
+                        .putString(PREF_ART_URL, artUrl)
+                        .putInt(PREF_REPEAT,     repeatMode)
+                        .putBoolean(PREF_LIKED,  isLiked)
+                        .commit()
+                }
             }
 
             // If the art URL is the same as last time, use the cached bitmap immediately.

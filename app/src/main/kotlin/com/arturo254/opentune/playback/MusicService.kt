@@ -1102,6 +1102,13 @@ class MusicService :
             }
             withContext(Dispatchers.Main) {
                 queueRestoreCompleted.value = true
+                // Push the restored track to the home-screen widget so it shows the
+                // last song again on cold start (e.g. after clearing recents), without
+                // waiting for the next playback event. Only when metadata is ready, so
+                // we never overwrite the saved widget state with a blank frame.
+                if (currentMediaMetadata.value != null) {
+                    notifyWidget()
+                }
             }
         }
 
