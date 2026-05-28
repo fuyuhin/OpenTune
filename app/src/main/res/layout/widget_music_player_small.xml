@@ -80,27 +80,11 @@
             android:layout_height="0dp"
             android:layout_weight="1" />
 
-        <!-- Compact controls: 5 flat icons, smaller -->
+        <!-- Compact controls: 4 flat icons, smaller -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="36dp"
             android:orientation="horizontal">
-
-            <FrameLayout
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1">
-                <ImageButton
-                    android:id="@+id/widget_btn_like"
-                    android:layout_width="32dp"
-                    android:layout_height="32dp"
-                    android:layout_gravity="center"
-                    android:padding="5dp"
-                    android:src="@drawable/favorite_border"
-                    android:background="@android:color/transparent"
-                    android:scaleType="fitCenter"
-                    android:contentDescription="@string/action_like" />
-            </FrameLayout>
 
             <FrameLayout
                 android:layout_width="0dp"
@@ -154,15 +138,15 @@
                 android:layout_height="match_parent"
                 android:layout_weight="1">
                 <ImageButton
-                    android:id="@+id/widget_btn_shuffle"
+                    android:id="@+id/widget_btn_repeat"
                     android:layout_width="32dp"
                     android:layout_height="32dp"
                     android:layout_gravity="center"
                     android:padding="5dp"
-                    android:src="@drawable/shuffle"
+                    android:src="@drawable/repeat"
                     android:background="@android:color/transparent"
                     android:scaleType="fitCenter"
-                    android:contentDescription="@string/shuffle" />
+                    android:contentDescription="@string/repeat" />
             </FrameLayout>
 
         </LinearLayout>

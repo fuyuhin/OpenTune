@@ -89,15 +89,13 @@ class MusicWidgetProvider : AppWidgetProvider() {
         const val EXTRA_ALBUM = "widget_album"
         const val EXTRA_IS_PLAYING = "widget_is_playing"
         const val EXTRA_ART_URL = "widget_art_url"
-        const val EXTRA_IS_LIKED = "widget_is_liked"
-        const val EXTRA_IS_SHUFFLE_ON = "widget_is_shuffle_on"
+        const val EXTRA_REPEAT_MODE = "widget_repeat_mode"
         const val EXTRA_LYRICS_LINE = "widget_lyrics_line"
 
         const val ACTION_WIDGET_PLAY_PAUSE = "com.arturo254.opentune.widget.cmd.PLAY_PAUSE"
         const val ACTION_WIDGET_NEXT = "com.arturo254.opentune.widget.cmd.NEXT"
         const val ACTION_WIDGET_PREV = "com.arturo254.opentune.widget.cmd.PREV"
-        const val ACTION_WIDGET_LIKE = "com.arturo254.opentune.widget.cmd.LIKE"
-        const val ACTION_WIDGET_SHUFFLE = "com.arturo254.opentune.widget.cmd.SHUFFLE"
+        const val ACTION_WIDGET_REPEAT = "com.arturo254.opentune.widget.cmd.REPEAT"
 
         private const val LYRIC_PREFIX = "♪ "
 
@@ -120,9 +118,8 @@ class MusicWidgetProvider : AppWidgetProvider() {
             val views = buildViews(
                 context, manager, widgetId,
                 title = null, artist = null, album = null,
-                isPlaying = false, isLiked = false,
-                isShuffleOn = false, lyricsLine = null,
-                artBitmap = null,
+                isPlaying = false, repeatMode = 0,
+                lyricsLine = null, artBitmap = null,
             )
             manager.updateAppWidget(widgetId, views)
         }
@@ -136,8 +133,7 @@ class MusicWidgetProvider : AppWidgetProvider() {
             album: String?,
             isPlaying: Boolean,
             artUrl: String?,
-            isLiked: Boolean,
-            isShuffleOn: Boolean,
+            repeatMode: Int,
             lyricsLine: String? = null,
         ) {
             // If the art URL is the same as last time, use the cached bitmap immediately.
@@ -148,7 +144,7 @@ class MusicWidgetProvider : AppWidgetProvider() {
 
             val views = buildViews(
                 context, manager, widgetId,
-                title, artist, album, isPlaying, isLiked, isShuffleOn, lyricsLine,
+                title, artist, album, isPlaying, repeatMode, lyricsLine,
                 artBitmap = cachedBitmap,
             )
             manager.updateAppWidget(widgetId, views)
@@ -165,7 +161,7 @@ class MusicWidgetProvider : AppWidgetProvider() {
                         }
                         val viewsWithArt = buildViews(
                             context, manager, widgetId,
-                            title, artist, album, isPlaying, isLiked, isShuffleOn, lyricsLine,
+                            title, artist, album, isPlaying, repeatMode, lyricsLine,
                             artBitmap = bitmap,
                         )
                         manager.updateAppWidget(widgetId, viewsWithArt)
@@ -191,14 +187,13 @@ class MusicWidgetProvider : AppWidgetProvider() {
             artist: String?,
             album: String?,
             isPlaying: Boolean,
-            isLiked: Boolean,
-            isShuffleOn: Boolean,
+            repeatMode: Int,
             lyricsLine: String?,
             artBitmap: Bitmap?,
         ): RemoteViews {
             val options = manager.getAppWidgetOptions(widgetId)
             return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                buildResponsiveViews(context, options, title, artist, album, isPlaying, isLiked, isShuffleOn, lyricsLine, artBitmap)
+                buildResponsiveViews(context, options, title, artist, album, isPlaying, repeatMode, lyricsLine, artBitmap)
             } else {
                 val heightDp = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 130)
                 val isCompact = heightDp < 100
@@ -208,7 +203,7 @@ class MusicWidgetProvider : AppWidgetProvider() {
                     context, views, title,
                     if (isCompact) null else artist,
                     if (isCompact) null else album,
-                    isPlaying, isLiked, isShuffleOn,
+                    isPlaying, repeatMode,
                     if (isCompact) null else lyricsLine,
                 )
                 applyArt(views, artBitmap)
@@ -225,16 +220,15 @@ class MusicWidgetProvider : AppWidgetProvider() {
             artist: String?,
             album: String?,
             isPlaying: Boolean,
-            isLiked: Boolean,
-            isShuffleOn: Boolean,
+            repeatMode: Int,
             lyricsLine: String?,
             artBitmap: Bitmap?,
         ): RemoteViews {
             val fullViews  = RemoteViews(context.packageName, R.layout.widget_music_player)
             val smallViews = RemoteViews(context.packageName, R.layout.widget_music_player_small)
 
-            populateViews(context, fullViews,  title, artist, album, isPlaying, isLiked, isShuffleOn, lyricsLine)
-            populateViews(context, smallViews, title, null,   null,  isPlaying, isLiked, isShuffleOn, null)
+            populateViews(context, fullViews,  title, artist, album, isPlaying, repeatMode, lyricsLine)
+            populateViews(context, smallViews, title, null,   null,  isPlaying, repeatMode, null)
             applyArt(fullViews,  artBitmap)
             applyArt(smallViews, artBitmap)
             setClickListeners(context, fullViews)
@@ -280,8 +274,7 @@ class MusicWidgetProvider : AppWidgetProvider() {
             artist: String?,
             album: String?,
             isPlaying: Boolean,
-            isLiked: Boolean,
-            isShuffleOn: Boolean,
+            repeatMode: Int,
             lyricsLine: String?,
         ) {
             val hasTrack = !title.isNullOrBlank()
@@ -309,44 +302,37 @@ class MusicWidgetProvider : AppWidgetProvider() {
             val playPauseIcon = if (isPlaying) R.drawable.ic_pause_white else R.drawable.ic_play_white
             views.setImageViewResource(R.id.widget_btn_play_pause, playPauseIcon)
 
-            applyButtonStates(views, isLiked, isShuffleOn, hasTrack)
+            applyButtonStates(views, repeatMode, hasTrack)
         }
 
-        private fun applyButtonStates(views: RemoteViews, isLiked: Boolean, isShuffleOn: Boolean, hasTrack: Boolean) {
+        private fun applyButtonStates(views: RemoteViews, repeatMode: Int, hasTrack: Boolean) {
             // Pure-white tint on every control, no accent colours.
             views.setInt(R.id.widget_btn_prev,       "setColorFilter", Color.WHITE)
             views.setInt(R.id.widget_btn_next,       "setColorFilter", Color.WHITE)
             views.setInt(R.id.widget_btn_play_pause, "setColorFilter", Color.WHITE)
-            views.setInt(R.id.widget_btn_like,       "setColorFilter", Color.WHITE)
-            views.setInt(R.id.widget_btn_shuffle,    "setColorFilter", Color.WHITE)
+            views.setInt(R.id.widget_btn_repeat,     "setColorFilter", Color.WHITE)
 
-            // Liked: filled heart (still white). Per spec, no accent.
-            views.setImageViewResource(
-                R.id.widget_btn_like,
-                if (isLiked) R.drawable.favorite else R.drawable.favorite_border,
-            )
-
-            // Shuffle: subtly indicate "on" via the dedicated icon variant.
-            views.setImageViewResource(
-                R.id.widget_btn_shuffle,
-                if (isShuffleOn) R.drawable.shuffle_on else R.drawable.shuffle,
-            )
+            // Repeat: cycle through off / all / one using dedicated icon variants.
+            val repeatIcon = when (repeatMode) {
+                androidx.media3.common.Player.REPEAT_MODE_ONE -> R.drawable.repeat_one_on
+                androidx.media3.common.Player.REPEAT_MODE_ALL -> R.drawable.repeat_on
+                else -> R.drawable.repeat
+            }
+            views.setImageViewResource(R.id.widget_btn_repeat, repeatIcon)
 
             // No-track state: dim all controls to 50% per spec.
             val alpha = if (hasTrack) FULL_BUTTON_ALPHA else NO_TRACK_BUTTON_ALPHA
-            views.setFloat(R.id.widget_btn_like,       "setAlpha", alpha)
             views.setFloat(R.id.widget_btn_prev,       "setAlpha", alpha)
             views.setFloat(R.id.widget_btn_play_pause, "setAlpha", alpha)
             views.setFloat(R.id.widget_btn_next,       "setAlpha", alpha)
-            views.setFloat(R.id.widget_btn_shuffle,    "setAlpha", alpha)
+            views.setFloat(R.id.widget_btn_repeat,     "setAlpha", alpha)
         }
 
         private fun setClickListeners(context: Context, views: RemoteViews) {
             views.setOnClickPendingIntent(R.id.widget_btn_play_pause, buildServiceIntent(context, ACTION_WIDGET_PLAY_PAUSE))
             views.setOnClickPendingIntent(R.id.widget_btn_next,       buildServiceIntent(context, ACTION_WIDGET_NEXT))
             views.setOnClickPendingIntent(R.id.widget_btn_prev,       buildServiceIntent(context, ACTION_WIDGET_PREV))
-            views.setOnClickPendingIntent(R.id.widget_btn_like,       buildServiceIntent(context, ACTION_WIDGET_LIKE))
-            views.setOnClickPendingIntent(R.id.widget_btn_shuffle,    buildServiceIntent(context, ACTION_WIDGET_SHUFFLE))
+            views.setOnClickPendingIntent(R.id.widget_btn_repeat,     buildServiceIntent(context, ACTION_WIDGET_REPEAT))
             val openApp = PendingIntent.getActivity(
                 context, 0,
                 Intent(context, MainActivity::class.java).apply {

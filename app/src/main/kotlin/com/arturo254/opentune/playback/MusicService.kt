@@ -141,6 +141,7 @@ import com.arturo254.opentune.db.entities.AlbumEntity
 import com.arturo254.opentune.di.DownloadCache
 import com.arturo254.opentune.di.PlayerCache
 import com.arturo254.opentune.extensions.SilentHandler
+import com.arturo254.opentune.extensions.toggleRepeatMode
 import com.arturo254.opentune.extensions.collect
 import com.arturo254.opentune.extensions.collectLatest
 import com.arturo254.opentune.extensions.currentMetadata
@@ -1503,12 +1504,11 @@ class MusicService :
             ?: currentSong.value?.song?.albumName?.takeIf { it.isNotBlank() }
         val isPlaying = player.isPlaying || (player.playWhenReady && player.playbackState == Player.STATE_BUFFERING)
         val artUrl = metadata?.thumbnailUrl
-        val isLiked = currentSong.value?.song?.liked == true
-        val isShuffleOn = player.shuffleModeEnabled
+        val repeatMode = player.repeatMode
         for (id in ids) {
             MusicWidgetProvider.updateWidgetContent(
                 this, manager, id,
-                title, artist, album, isPlaying, artUrl, isLiked, isShuffleOn,
+                title, artist, album, isPlaying, artUrl, repeatMode,
                 currentWidgetLyricsLine,
             )
         }
@@ -4273,6 +4273,7 @@ class MusicService :
                 saveQueueToDisk()
             }
         }
+        notifyWidget()
     }
 
     override fun onPlayerError(error: PlaybackException) {
@@ -5149,15 +5150,8 @@ class MusicService :
             MusicWidgetProvider.ACTION_WIDGET_PREV -> whenQueueReady {
                 player.seekToPreviousMediaItem()
             }
-            MusicWidgetProvider.ACTION_WIDGET_LIKE -> {
-                toggleLike()
-                // Notify widget after a short delay to pick up the DB write
-                android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(
-                    { notifyWidget() }, 300L
-                )
-            }
-            MusicWidgetProvider.ACTION_WIDGET_SHUFFLE -> whenQueueReady {
-                player.shuffleModeEnabled = !player.shuffleModeEnabled
+            MusicWidgetProvider.ACTION_WIDGET_REPEAT -> whenQueueReady {
+                player.toggleRepeatMode()
                 notifyWidget()
             }
             MusicWidgetProvider.ACTION_UPDATE_WIDGET -> notifyWidget()

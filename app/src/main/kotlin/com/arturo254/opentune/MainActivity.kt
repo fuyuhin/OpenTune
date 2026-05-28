@@ -968,10 +968,10 @@ class MainActivity : ComponentActivity() {
                             }
                         } else {
                             if (!isYearInMusicScreen) {
+                                // Always show the mini player when a song is loaded,
+                                // even if it was dismissed in a previous session.
                                 when (savedMiniPlayerAnchor) {
                                     EXPANDED_ANCHOR -> playerBottomSheetState.expandSoft()
-                                    COLLAPSED_ANCHOR -> playerBottomSheetState.collapseSoft()
-                                    DISMISSED_ANCHOR -> playerBottomSheetState.dismiss()
                                     else -> playerBottomSheetState.collapseSoft()
                                 }
                             }
