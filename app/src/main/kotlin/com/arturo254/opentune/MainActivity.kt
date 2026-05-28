@@ -963,13 +963,15 @@ class MainActivity : ComponentActivity() {
                         val connection = playerConnection ?: return@LaunchedEffect
                         connection.queueRestoreCompleted.first { it }
                         if (player.currentMediaItem == null) {
-                            if (!playerBottomSheetState.isDismissed) {
+                            // Queue is empty after restore (no prior session, or user cleared
+                            // data). Only dismiss if the user had already dismissed it before.
+                            if (savedMiniPlayerAnchor == DISMISSED_ANCHOR &&
+                                !playerBottomSheetState.isDismissed) {
                                 playerBottomSheetState.dismiss()
                             }
                         } else {
                             if (!isYearInMusicScreen) {
-                                // Always show the mini player when a song is loaded,
-                                // even if it was dismissed in a previous session.
+                                // Queue restored: show the mini player at its saved anchor.
                                 when (savedMiniPlayerAnchor) {
                                     EXPANDED_ANCHOR -> playerBottomSheetState.expandSoft()
                                     else -> playerBottomSheetState.collapseSoft()

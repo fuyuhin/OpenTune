@@ -120,6 +120,7 @@ import com.arturo254.opentune.R
 import com.arturo254.opentune.LocalDownloadUtil
 import com.arturo254.opentune.LocalPlayerConnection
 import com.arturo254.opentune.constants.DarkModeKey
+import com.arturo254.opentune.constants.MiniPlayerHeight
 import com.arturo254.opentune.constants.PlayerDesignStyle
 import com.arturo254.opentune.constants.PlayerDesignStyleKey
 import com.arturo254.opentune.constants.UseNewMiniPlayerDesignKey
@@ -183,7 +184,26 @@ fun BottomSheetPlayer(
 
     val bottomSheetPageState = LocalBottomSheetPageState.current
 
-    val playerConnection = LocalPlayerConnection.current ?: return
+    val playerConnection = LocalPlayerConnection.current
+
+    // When the service is starting up (playerConnection == null), render a slim
+    // placeholder so the mini player bar area is never blank. Once the service
+    // connects, the full BottomSheetPlayer below replaces this.
+    if (playerConnection == null) {
+        BottomSheet(
+            state = state,
+            modifier = modifier,
+            collapsedContent = {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(MiniPlayerHeight)
+                        .background(MaterialTheme.colorScheme.surfaceContainer),
+                )
+            },
+        ) {}
+        return
+    }
 
     val playerDesignStyle by rememberEnumPreference(
         key = PlayerDesignStyleKey,
