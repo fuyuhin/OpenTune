@@ -1505,10 +1505,11 @@ class MusicService :
         val isPlaying = player.isPlaying || (player.playWhenReady && player.playbackState == Player.STATE_BUFFERING)
         val artUrl = metadata?.thumbnailUrl
         val repeatMode = player.repeatMode
+        val isLiked = currentSong.value?.song?.liked == true
         for (id in ids) {
             MusicWidgetProvider.updateWidgetContent(
                 this, manager, id,
-                title, artist, album, isPlaying, artUrl, repeatMode,
+                title, artist, album, isPlaying, artUrl, repeatMode, isLiked,
                 currentWidgetLyricsLine,
             )
         }
@@ -5153,6 +5154,12 @@ class MusicService :
             MusicWidgetProvider.ACTION_WIDGET_REPEAT -> whenQueueReady {
                 player.toggleRepeatMode()
                 notifyWidget()
+            }
+            MusicWidgetProvider.ACTION_WIDGET_LIKE -> {
+                toggleLike()
+                android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(
+                    { notifyWidget() }, 300L
+                )
             }
             MusicWidgetProvider.ACTION_UPDATE_WIDGET -> notifyWidget()
         }

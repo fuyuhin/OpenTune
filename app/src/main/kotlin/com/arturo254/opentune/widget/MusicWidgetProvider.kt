@@ -90,12 +90,14 @@ class MusicWidgetProvider : AppWidgetProvider() {
         const val EXTRA_IS_PLAYING = "widget_is_playing"
         const val EXTRA_ART_URL = "widget_art_url"
         const val EXTRA_REPEAT_MODE = "widget_repeat_mode"
+        const val EXTRA_IS_LIKED = "widget_is_liked"
         const val EXTRA_LYRICS_LINE = "widget_lyrics_line"
 
         const val ACTION_WIDGET_PLAY_PAUSE = "com.arturo254.opentune.widget.cmd.PLAY_PAUSE"
         const val ACTION_WIDGET_NEXT = "com.arturo254.opentune.widget.cmd.NEXT"
         const val ACTION_WIDGET_PREV = "com.arturo254.opentune.widget.cmd.PREV"
         const val ACTION_WIDGET_REPEAT = "com.arturo254.opentune.widget.cmd.REPEAT"
+        const val ACTION_WIDGET_LIKE = "com.arturo254.opentune.widget.cmd.LIKE"
 
         private const val LYRIC_PREFIX = "♪ "
 
@@ -118,7 +120,7 @@ class MusicWidgetProvider : AppWidgetProvider() {
             val views = buildViews(
                 context, manager, widgetId,
                 title = null, artist = null, album = null,
-                isPlaying = false, repeatMode = 0,
+                isPlaying = false, repeatMode = 0, isLiked = false,
                 lyricsLine = null, artBitmap = null,
             )
             manager.updateAppWidget(widgetId, views)
@@ -134,6 +136,7 @@ class MusicWidgetProvider : AppWidgetProvider() {
             isPlaying: Boolean,
             artUrl: String?,
             repeatMode: Int,
+            isLiked: Boolean,
             lyricsLine: String? = null,
         ) {
             // If the art URL is the same as last time, use the cached bitmap immediately.
@@ -144,7 +147,7 @@ class MusicWidgetProvider : AppWidgetProvider() {
 
             val views = buildViews(
                 context, manager, widgetId,
-                title, artist, album, isPlaying, repeatMode, lyricsLine,
+                title, artist, album, isPlaying, repeatMode, isLiked, lyricsLine,
                 artBitmap = cachedBitmap,
             )
             manager.updateAppWidget(widgetId, views)
@@ -161,7 +164,7 @@ class MusicWidgetProvider : AppWidgetProvider() {
                         }
                         val viewsWithArt = buildViews(
                             context, manager, widgetId,
-                            title, artist, album, isPlaying, repeatMode, lyricsLine,
+                            title, artist, album, isPlaying, repeatMode, isLiked, lyricsLine,
                             artBitmap = bitmap,
                         )
                         manager.updateAppWidget(widgetId, viewsWithArt)
@@ -188,12 +191,13 @@ class MusicWidgetProvider : AppWidgetProvider() {
             album: String?,
             isPlaying: Boolean,
             repeatMode: Int,
+            isLiked: Boolean,
             lyricsLine: String?,
             artBitmap: Bitmap?,
         ): RemoteViews {
             val options = manager.getAppWidgetOptions(widgetId)
             return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                buildResponsiveViews(context, options, title, artist, album, isPlaying, repeatMode, lyricsLine, artBitmap)
+                buildResponsiveViews(context, options, title, artist, album, isPlaying, repeatMode, isLiked, lyricsLine, artBitmap)
             } else {
                 val heightDp = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 130)
                 val isCompact = heightDp < 100
@@ -205,9 +209,10 @@ class MusicWidgetProvider : AppWidgetProvider() {
                     if (isCompact) null else album,
                     isPlaying, repeatMode,
                     if (isCompact) null else lyricsLine,
+                    isLiked = if (isCompact) isLiked else null,
                 )
                 applyArt(views, artBitmap)
-                setClickListeners(context, views)
+                setClickListeners(context, views, hasLike = isCompact)
                 views
             }
         }
@@ -221,18 +226,21 @@ class MusicWidgetProvider : AppWidgetProvider() {
             album: String?,
             isPlaying: Boolean,
             repeatMode: Int,
+            isLiked: Boolean,
             lyricsLine: String?,
             artBitmap: Bitmap?,
         ): RemoteViews {
             val fullViews  = RemoteViews(context.packageName, R.layout.widget_music_player)
             val smallViews = RemoteViews(context.packageName, R.layout.widget_music_player_small)
 
-            populateViews(context, fullViews,  title, artist, album, isPlaying, repeatMode, lyricsLine)
-            populateViews(context, smallViews, title, null,   null,  isPlaying, repeatMode, null)
+            // 4×2: no like button (isLiked = null skips like-related RemoteViews calls)
+            // 4×1: like button present, pass actual liked state
+            populateViews(context, fullViews,  title, artist, album, isPlaying, repeatMode, lyricsLine, isLiked = null)
+            populateViews(context, smallViews, title, null,   null,  isPlaying, repeatMode, null,        isLiked = isLiked)
             applyArt(fullViews,  artBitmap)
             applyArt(smallViews, artBitmap)
-            setClickListeners(context, fullViews)
-            setClickListeners(context, smallViews)
+            setClickListeners(context, fullViews,  hasLike = false)
+            setClickListeners(context, smallViews, hasLike = true)
 
             // Dynamic square art: width = current widget height (per orientation).
             // Small layout is laid out at the 56dp breakpoint per the sizeMap below, so
@@ -276,6 +284,7 @@ class MusicWidgetProvider : AppWidgetProvider() {
             isPlaying: Boolean,
             repeatMode: Int,
             lyricsLine: String?,
+            isLiked: Boolean? = null,  // null = layout has no like button (4×2)
         ) {
             val hasTrack = !title.isNullOrBlank()
 
@@ -302,10 +311,10 @@ class MusicWidgetProvider : AppWidgetProvider() {
             val playPauseIcon = if (isPlaying) R.drawable.ic_pause_white else R.drawable.ic_play_white
             views.setImageViewResource(R.id.widget_btn_play_pause, playPauseIcon)
 
-            applyButtonStates(views, repeatMode, hasTrack)
+            applyButtonStates(views, repeatMode, hasTrack, isLiked)
         }
 
-        private fun applyButtonStates(views: RemoteViews, repeatMode: Int, hasTrack: Boolean) {
+        private fun applyButtonStates(views: RemoteViews, repeatMode: Int, hasTrack: Boolean, isLiked: Boolean?) {
             // Pure-white tint on every control, no accent colours.
             views.setInt(R.id.widget_btn_prev,       "setColorFilter", Color.WHITE)
             views.setInt(R.id.widget_btn_next,       "setColorFilter", Color.WHITE)
@@ -326,13 +335,26 @@ class MusicWidgetProvider : AppWidgetProvider() {
             views.setFloat(R.id.widget_btn_play_pause, "setAlpha", alpha)
             views.setFloat(R.id.widget_btn_next,       "setAlpha", alpha)
             views.setFloat(R.id.widget_btn_repeat,     "setAlpha", alpha)
+
+            // Like button: only present in the 4×1 small layout.
+            if (isLiked != null) {
+                views.setInt(R.id.widget_btn_like, "setColorFilter", Color.WHITE)
+                views.setImageViewResource(
+                    R.id.widget_btn_like,
+                    if (isLiked) R.drawable.favorite else R.drawable.favorite_border,
+                )
+                views.setFloat(R.id.widget_btn_like, "setAlpha", alpha)
+            }
         }
 
-        private fun setClickListeners(context: Context, views: RemoteViews) {
+        private fun setClickListeners(context: Context, views: RemoteViews, hasLike: Boolean = false) {
             views.setOnClickPendingIntent(R.id.widget_btn_play_pause, buildServiceIntent(context, ACTION_WIDGET_PLAY_PAUSE))
             views.setOnClickPendingIntent(R.id.widget_btn_next,       buildServiceIntent(context, ACTION_WIDGET_NEXT))
             views.setOnClickPendingIntent(R.id.widget_btn_prev,       buildServiceIntent(context, ACTION_WIDGET_PREV))
             views.setOnClickPendingIntent(R.id.widget_btn_repeat,     buildServiceIntent(context, ACTION_WIDGET_REPEAT))
+            if (hasLike) {
+                views.setOnClickPendingIntent(R.id.widget_btn_like,   buildServiceIntent(context, ACTION_WIDGET_LIKE))
+            }
             val openApp = PendingIntent.getActivity(
                 context, 0,
                 Intent(context, MainActivity::class.java).apply {
