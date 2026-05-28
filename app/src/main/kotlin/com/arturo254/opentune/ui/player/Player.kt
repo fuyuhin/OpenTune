@@ -193,6 +193,7 @@ fun BottomSheetPlayer(
         BottomSheet(
             state = state,
             modifier = modifier,
+            backgroundColor = MaterialTheme.colorScheme.surfaceContainer,
             collapsedContent = {
                 Box(
                     modifier = Modifier
