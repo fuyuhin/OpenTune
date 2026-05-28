@@ -137,7 +137,6 @@
     <string name="error_timeout">超时</string>
     <string name="error_unknown">未知错误</string>
     <string name="action_like">喜爱</string>
-    <string name="liked">已喜爱</string>
     <string name="action_like_all">全部喜爱</string>
     <string name="action_remove_like">移除喜爱</string>
     <string name="action_remove_like_all">移除所有喜爱</string>
