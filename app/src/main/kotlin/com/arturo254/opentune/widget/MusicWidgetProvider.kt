@@ -118,14 +118,60 @@ class MusicWidgetProvider : AppWidgetProvider() {
         // the two-phase transparent→art flicker.
         private val artCache = mutableMapOf<Int, Pair<String, Bitmap>>()
 
+        // SharedPreferences keys for persisting the last known track state so the
+        // widget can show something useful after the service is killed (e.g. after
+        // clearing recents on Samsung One UI).
+        private const val PREFS_NAME   = "opentune_widget_state"
+        private const val PREF_TITLE   = "last_title"
+        private const val PREF_ARTIST  = "last_artist"
+        private const val PREF_ALBUM   = "last_album"
+        private const val PREF_ART_URL = "last_art_url"
+        private const val PREF_REPEAT  = "last_repeat"
+        private const val PREF_LIKED   = "last_liked"
+
         fun updateWidget(context: Context, manager: AppWidgetManager, widgetId: Int) {
+            // Read the last known state from SharedPreferences so the widget keeps
+            // showing the previous track info even when the service is dead.
+            val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            val title      = prefs.getString(PREF_TITLE,   null)
+            val artist     = prefs.getString(PREF_ARTIST,  null)
+            val album      = prefs.getString(PREF_ALBUM,   null)
+            val artUrl     = prefs.getString(PREF_ART_URL, null)
+            val repeatMode = prefs.getInt(PREF_REPEAT, 0)
+            val isLiked    = prefs.getBoolean(PREF_LIKED, false)
+
+            val cached = synchronized(artCache) { artCache[widgetId] }
+            val cachedBitmap = if (!artUrl.isNullOrBlank() && cached?.first == artUrl) cached.second else null
+
             val views = buildViews(
                 context, manager, widgetId,
-                title = null, artist = null, album = null,
-                isPlaying = false, repeatMode = 0, isLiked = false,
-                lyricsLine = null, artBitmap = null,
+                title, artist, album,
+                isPlaying = false,   // service is dead, definitely not playing
+                repeatMode, isLiked,
+                lyricsLine = null,
+                artBitmap = cachedBitmap,
             )
             manager.updateAppWidget(widgetId, views)
+
+            // Re-fetch art in the background if the in-memory cache was cleared with the process.
+            if (!artUrl.isNullOrBlank() && cachedBitmap == null) {
+                synchronized(artJobs) { artJobs.remove(widgetId)?.cancel() }
+                val job = artScope.launch {
+                    val bitmap = loadAndRoundBitmap(artUrl)
+                    withContext(Dispatchers.Main) {
+                        if (bitmap != null) {
+                            synchronized(artCache) { artCache[widgetId] = artUrl to bitmap }
+                        }
+                        val viewsWithArt = buildViews(
+                            context, manager, widgetId,
+                            title, artist, album, false, repeatMode, isLiked, null,
+                            artBitmap = bitmap,
+                        )
+                        manager.updateAppWidget(widgetId, viewsWithArt)
+                    }
+                }
+                synchronized(artJobs) { artJobs[widgetId] = job }
+            }
         }
 
         fun updateWidgetContent(
@@ -141,6 +187,16 @@ class MusicWidgetProvider : AppWidgetProvider() {
             isLiked: Boolean,
             lyricsLine: String? = null,
         ) {
+            // Persist state so updateWidget() can restore it when the service is dead.
+            context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit()
+                .putString(PREF_TITLE,   title)
+                .putString(PREF_ARTIST,  artist)
+                .putString(PREF_ALBUM,   album)
+                .putString(PREF_ART_URL, artUrl)
+                .putInt(PREF_REPEAT,     repeatMode)
+                .putBoolean(PREF_LIKED,  isLiked)
+                .apply()
+
             // If the art URL is the same as last time, use the cached bitmap immediately.
             // This means lyric-only updates (same track, different lyric line) render in a
             // single pass — no transparent placeholder → no flicker.
@@ -401,12 +457,19 @@ class MusicWidgetProvider : AppWidgetProvider() {
             views.setOnClickPendingIntent(R.id.widget_album_art,   openApp)
         }
 
-        private fun buildServiceIntent(context: Context, action: String): PendingIntent =
-            PendingIntent.getService(
-                context, action.hashCode(),
-                Intent(action, null, context, MusicService::class.java),
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
-            )
+        private fun buildServiceIntent(context: Context, action: String): PendingIntent {
+            val intent = Intent(action, null, context, MusicService::class.java)
+            val flags  = PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            // getForegroundService() (API 26+) bypasses background-start restrictions on
+            // OEMs like Samsung One UI that block plain startService() from widgets when
+            // the app is not in the foreground. MusicService calls startForeground() via
+            // onUpdateNotification() within the required 5-second window.
+            return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                PendingIntent.getForegroundService(context, action.hashCode(), intent, flags)
+            } else {
+                PendingIntent.getService(context, action.hashCode(), intent, flags)
+            }
+        }
 
         private fun loadAndRoundBitmap(url: String): Bitmap? {
             var conn: HttpURLConnection? = null
