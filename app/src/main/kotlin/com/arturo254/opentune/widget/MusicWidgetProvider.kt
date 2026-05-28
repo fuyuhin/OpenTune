@@ -209,10 +209,10 @@ class MusicWidgetProvider : AppWidgetProvider() {
                     if (isCompact) null else album,
                     isPlaying, repeatMode,
                     if (isCompact) null else lyricsLine,
-                    isLiked = if (isCompact) isLiked else null,
+                    isLiked = isLiked,
                 )
                 applyArt(views, artBitmap)
-                setClickListeners(context, views, hasLike = isCompact)
+                setClickListeners(context, views, hasLike = true)
                 views
             }
         }
@@ -233,13 +233,12 @@ class MusicWidgetProvider : AppWidgetProvider() {
             val fullViews  = RemoteViews(context.packageName, R.layout.widget_music_player)
             val smallViews = RemoteViews(context.packageName, R.layout.widget_music_player_small)
 
-            // 4×2: no like button (isLiked = null skips like-related RemoteViews calls)
-            // 4×1: like button present, pass actual liked state
-            populateViews(context, fullViews,  title, artist, album, isPlaying, repeatMode, lyricsLine, isLiked = null)
+            // Both layouts carry the like button: pass the actual liked state to each.
+            populateViews(context, fullViews,  title, artist, album, isPlaying, repeatMode, lyricsLine, isLiked = isLiked)
             populateViews(context, smallViews, title, null,   null,  isPlaying, repeatMode, null,        isLiked = isLiked)
             applyArt(fullViews,  artBitmap)
             applyArt(smallViews, artBitmap)
-            setClickListeners(context, fullViews,  hasLike = false)
+            setClickListeners(context, fullViews,  hasLike = true)
             setClickListeners(context, smallViews, hasLike = true)
 
             // Dynamic square art: width = current widget height (per orientation).
@@ -284,7 +283,7 @@ class MusicWidgetProvider : AppWidgetProvider() {
             isPlaying: Boolean,
             repeatMode: Int,
             lyricsLine: String?,
-            isLiked: Boolean? = null,  // null = layout has no like button (4×2)
+            isLiked: Boolean? = null,  // null = skip like state for this pass
         ) {
             val hasTrack = !title.isNullOrBlank()
 
@@ -336,7 +335,8 @@ class MusicWidgetProvider : AppWidgetProvider() {
             views.setFloat(R.id.widget_btn_next,       "setAlpha", alpha)
             views.setFloat(R.id.widget_btn_repeat,     "setAlpha", alpha)
 
-            // Like button: only present in the 4×1 small layout.
+            // Like button: present in both layouts; isLiked == null means the caller
+            // opted out of touching like state for this pass.
             if (isLiked != null) {
                 views.setInt(R.id.widget_btn_like, "setColorFilter", Color.WHITE)
                 views.setImageViewResource(
