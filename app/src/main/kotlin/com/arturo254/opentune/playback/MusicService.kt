@@ -1102,13 +1102,11 @@ class MusicService :
             }
             withContext(Dispatchers.Main) {
                 queueRestoreCompleted.value = true
-                // Push the restored track to the home-screen widget so it shows the
-                // last song again on cold start (e.g. after clearing recents), without
-                // waiting for the next playback event. Only when metadata is ready, so
-                // we never overwrite the saved widget state with a blank frame.
-                if (currentMediaMetadata.value != null) {
-                    notifyWidget()
-                }
+                // Refresh the home-screen widget after restore so it shows the last song
+                // on cold start (e.g. after clearing recents). refreshWidgetView() falls
+                // back to the persisted state when metadata isn't ready yet, so this is
+                // safe to call unconditionally and never pushes a blank frame.
+                notifyWidget()
             }
         }
 
@@ -1503,14 +1501,25 @@ class MusicService :
         )
         if (ids.isEmpty()) return
         val metadata = currentMediaMetadata.value
-        val title = metadata?.title
-        val artist = metadata?.artists?.joinToString(", ") { it.name }
+        // No live metadata yet (e.g. a playback event fired during cold-start queue
+        // restore, before currentMediaMetadata is populated). Do NOT push a blank
+        // frame — that would wipe the last song off the widget. Instead let the
+        // provider re-render from its persisted SharedPreferences state so the widget
+        // keeps showing the previous track.
+        if (metadata == null) {
+            for (id in ids) {
+                MusicWidgetProvider.updateWidget(this, manager, id)
+            }
+            return
+        }
+        val title = metadata.title
+        val artist = metadata.artists?.joinToString(", ") { it.name }
         // Metadata.album.title is sometimes empty for streamed tracks even though
         // the DB Song row has albumName populated — fall back to the DB value.
-        val album = metadata?.album?.title?.takeIf { it.isNotBlank() }
+        val album = metadata.album?.title?.takeIf { it.isNotBlank() }
             ?: currentSong.value?.song?.albumName?.takeIf { it.isNotBlank() }
         val isPlaying = player.isPlaying || (player.playWhenReady && player.playbackState == Player.STATE_BUFFERING)
-        val artUrl = metadata?.thumbnailUrl
+        val artUrl = metadata.thumbnailUrl
         val repeatMode = player.repeatMode
         val isLiked = currentSong.value?.song?.liked == true
         for (id in ids) {

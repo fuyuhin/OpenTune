@@ -998,24 +998,31 @@ class MainActivity : ComponentActivity() {
                                         playerBottomSheetState.collapseSoft()
                                     }
                                 }
-
-                                // Reactive safety net: whenever a current item exists (e.g. the
-                                // persisted queue restored on cold start) and the mini player is
-                                // hidden, bring it back. Guarded on isDismissed so it never fights
-                                // an expanded player or a user dismiss (which clears playback, so
-                                // currentMediaItem becomes null and this is a no-op).
-                                override fun onEvents(player: Player, events: Player.Events) {
-                                    if (player.currentMediaItem != null &&
-                                        playerBottomSheetState.isDismissed &&
-                                        !isYearInMusicScreen
-                                    ) {
-                                        playerBottomSheetState.collapseSoft()
-                                    }
-                                }
                             }
                         player.addListener(listener)
                         onDispose {
                             player.removeListener(listener)
+                        }
+                    }
+
+                    // Robust mini-player visibility: collect the metadata StateFlow. A
+                    // StateFlow replays its current value the moment collection starts, so
+                    // on cold start (after clearing recents) this immediately sees the
+                    // restored track and re-shows the mini player — fixing the race where
+                    // the one-shot effect above ran before the queue finished restoring or
+                    // the bottom-sheet state was recreated to dismissed. It only reacts to
+                    // metadata emissions, so it never fights a user dismiss: dismissing
+                    // calls stopAndClearPlayback() which sets metadata to null, and a null
+                    // emission is a no-op here.
+                    LaunchedEffect(playerConnection, isYearInMusicScreen) {
+                        val connection = playerConnection ?: return@LaunchedEffect
+                        connection.mediaMetadata.collectLatest { metadata ->
+                            if (metadata != null &&
+                                !isYearInMusicScreen &&
+                                playerBottomSheetState.isDismissed
+                            ) {
+                                playerBottomSheetState.collapseSoft()
+                            }
                         }
                     }
 
