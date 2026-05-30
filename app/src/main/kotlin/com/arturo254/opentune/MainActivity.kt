@@ -1005,23 +1005,35 @@ class MainActivity : ComponentActivity() {
                         }
                     }
 
-                    // Robust mini-player visibility: collect the metadata StateFlow. A
-                    // StateFlow replays its current value the moment collection starts, so
-                    // on cold start (after clearing recents) this immediately sees the
-                    // restored track and re-shows the mini player — fixing the race where
-                    // the one-shot effect above ran before the queue finished restoring or
-                    // the bottom-sheet state was recreated to dismissed. It only reacts to
-                    // metadata emissions, so it never fights a user dismiss: dismissing
-                    // calls stopAndClearPlayback() which sets metadata to null, and a null
-                    // emission is a no-op here.
-                    LaunchedEffect(playerConnection, isYearInMusicScreen) {
+                    // Authoritative mini-player visibility: keep the mini player pinned
+                    // whenever a song exists. Collecting the metadata StateFlow replays its
+                    // current value the instant collection starts, so on cold start (after
+                    // clearing recents) this immediately sees the restored track and re-shows
+                    // the bar.
+                    //
+                    // Crucially this effect is also keyed on `playerBottomSheetState`. That
+                    // state object is recreated every time its bounds change (insets settling,
+                    // nav-bar visibility resolving — which happens right as playerConnection
+                    // connects), and a recreated state starts dismissed. Without this key the
+                    // effect would keep operating on the stale, discarded state object while
+                    // the live one stayed sunk. Re-keying makes the effect re-run against the
+                    // current state and re-pin the bar after any recreation.
+                    //
+                    // It only reacts to non-null metadata, so it never fights a user dismiss:
+                    // dismissing calls stopAndClearPlayback() which sets metadata to null, and
+                    // a null emission is a no-op here. It restores at the user's saved anchor
+                    // so an expanded player is honored rather than forced to collapse.
+                    LaunchedEffect(playerConnection, playerBottomSheetState, isYearInMusicScreen) {
                         val connection = playerConnection ?: return@LaunchedEffect
                         connection.mediaMetadata.collectLatest { metadata ->
                             if (metadata != null &&
                                 !isYearInMusicScreen &&
                                 playerBottomSheetState.isDismissed
                             ) {
-                                playerBottomSheetState.collapseSoft()
+                                when (savedMiniPlayerAnchor) {
+                                    EXPANDED_ANCHOR -> playerBottomSheetState.expandSoft()
+                                    else -> playerBottomSheetState.collapseSoft()
+                                }
                             }
                         }
                     }

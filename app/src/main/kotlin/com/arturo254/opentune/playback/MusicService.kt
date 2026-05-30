@@ -5150,10 +5150,32 @@ class MusicService :
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
-        when (intent?.action) {
+        val action = intent?.action
+        // Widget control buttons launch this service via PendingIntent.getForegroundService()
+        // (API 26+). Android then REQUIRES startForeground() within ~5 seconds or it kills the
+        // app with ForegroundServiceDidNotStartInTimeException. The handlers below are async —
+        // whenQueueReady{} waits for the persisted queue to restore from disk, which can exceed
+        // that window after the process was killed (e.g. cleared from recents). So promote to
+        // foreground synchronously here first; if nothing ends up playing, scheduleStopIfIdle()
+        // tears the service back down. (ACTION_UPDATE_WIDGET uses plain startService(), so it is
+        // intentionally excluded.)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
+            (action == MusicWidgetProvider.ACTION_WIDGET_PLAY_PAUSE ||
+                action == MusicWidgetProvider.ACTION_WIDGET_NEXT ||
+                action == MusicWidgetProvider.ACTION_WIDGET_PREV ||
+                action == MusicWidgetProvider.ACTION_WIDGET_REPEAT ||
+                action == MusicWidgetProvider.ACTION_WIDGET_LIKE)
+        ) {
+            ensureStartedAsForeground()
+        }
+        when (action) {
             MusicWidgetProvider.ACTION_WIDGET_PLAY_PAUSE -> whenQueueReady {
                 when {
-                    player.mediaItemCount == 0 -> { /* nothing to play */ }
+                    player.mediaItemCount == 0 -> {
+                        // Nothing was restored to play — don't leave the service pinned in the
+                        // foreground after the synchronous promotion above.
+                        scheduleStopIfIdle()
+                    }
                     player.playbackState == Player.STATE_IDLE || player.playbackState == Player.STATE_ENDED -> {
                         player.prepare()
                         player.play()
